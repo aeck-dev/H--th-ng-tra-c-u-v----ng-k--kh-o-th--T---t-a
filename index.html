@@ -89,12 +89,12 @@
             min-width: 120px;
         }
         .modal-btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: rgb(192, 0, 0);
             color: white;
         }
         .modal-btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 5px 15px rgba(192, 0, 0, 0.4);
         }
         .modal-btn-secondary {
             background: #f8f9fa;
@@ -116,13 +116,40 @@
             margin-bottom: 15px;
         }
         .registration-id {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: rgb(192, 0, 0);
             color: white;
             padding: 10px 15px;
             border-radius: 8px;
             font-weight: bold;
             text-align: center;
             margin: 15px 0;
+        }
+        .register-btn {
+            background: rgb(192, 0, 0);
+            color: white;
+        }
+        .register-btn.active:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(192, 0, 0, 0.4);
+        }
+        .register-btn.registered {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .btn-submit {
+            background: rgb(192, 0, 0);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(192, 0, 0, 0.4);
         }
     </style>
 </head>
@@ -185,7 +212,7 @@
                             <span class="value">18/01/2026 - 19/01/2026</span>
                         </div>
                     </div>
-                    <button class="register-btn active" onclick="showRegistrationForm('tsa-2026-dot-1')">Đăng ký</button>
+                    <button class="register-btn active" id="registerBtn-tsa-2026-dot-1" onclick="showRegistrationForm('tsa-2026-dot-1')">Đăng ký</button>
                 </div>
             </div>
         </div>
@@ -221,7 +248,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="province">Tỉnh/Thành phố *</nlabel>
+                    <label for="province">Tỉnh/Thành phố *</label>
                     <select id="province" name="province" required>
                         <option value="">Chọn tỉnh/thành phố</option>
                         <option>Hà Nội</option>
@@ -308,7 +335,7 @@
 
     <script>
         // Config
-        const GOOGLE_SHEETS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyA7TCmEzS_FwU2KYcOKLfTFDmy4xlgpL0qOp_FGXouv0KgpAKsdcpfSeexU9LW6AR4dg/exec';
+        const GOOGLE_SHEETS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyBXMtqsenvpeKn1pz-e9fg6TKB4Tu4vA0hYUohpx0u_F0RCtUPVFuMGTvAtAo-QkpibA/exec';
         let CURRENT_SESSION = 'tsa-2026-dot-1';
         const EXAM_NAMES = { 'tsa-2026-dot-1': 'Bài thi TSA 2026 chính thức - Đợt 1' };
 
@@ -397,6 +424,51 @@
             document.getElementById('modalIcon').innerHTML = '<i class="fas fa-check-circle success-icon"></i>';
             showModal('Đăng ký thành công!', 'Thông tin đã được lưu vào hệ thống', content, actions);
         }
+        function showDuplicateModal(existingData, duplicateType) {
+            const content = `
+                <div class="info-row">
+                    <span class="info-label">Thời gian đăng ký:</span>
+                    <span class="info-value">${existingData.registrationTime}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Đợt thi:</span>
+                    <span class="info-value">${EXAM_NAMES[existingData.examSession] || existingData.examSession}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Họ và tên:</span>
+                    <span class="info-value">${existingData.fullName}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Email:</span>
+                    <span class="info-value">${existingData.email}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Số điện thoại:</span>
+                    <span class="info-value">${existingData.phone}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Facebook:</span>
+                    <span class="info-value">${existingData.facebook}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Tỉnh/Thành phố:</span>
+                    <span class="info-value">${existingData.province}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Đối tượng:</span>
+                    <span class="info-value">${existingData.target}</span>
+                </div>
+            `;
+            const actions = `
+                <button class="modal-btn modal-btn-primary" onclick="hideModal();">Đã hiểu</button>
+            `;
+            document.getElementById('modalIcon').innerHTML = '<i class="fas fa-exclamation-triangle" style="color: #dc3545; font-size: 48px; margin-bottom: 15px;"></i>';
+            const title = duplicateType === 'email' ? 'Email đã được đăng ký!' : 'Số điện thoại đã được đăng ký!';
+            const subtitle = duplicateType === 'email' ? 
+                'Email này đã được sử dụng để đăng ký trước đó' : 
+                'Số điện thoại này đã được sử dụng để đăng ký trước đó';
+            showModal(title, subtitle, content, actions);
+        }
         let pendingRegistrationData = null;
         function submitRegistration() {
             if (!pendingRegistrationData) return;
@@ -408,27 +480,73 @@
             const originalText = submitBtn.textContent;
             submitBtn.disabled = true; submitBtn.textContent = 'Đang gửi...';
 
-            fetch(GOOGLE_SHEETS_WEBAPP_URL + '?v=1', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-                body: new URLSearchParams({ payload: JSON.stringify(data) }).toString()
-            })
-            .then(response => {
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                return response.text();
-            })
-            .then(text => {
+            // Get IP address for registration
+            fetch('https://api.ipify.org?format=json')
+                .then(response => response.json())
+                .then(ipData => {
+                    data.ipAddress = ipData.ip;
+                    return fetch(GOOGLE_SHEETS_WEBAPP_URL + '?v=1', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+                        body: new URLSearchParams({ payload: JSON.stringify(data) }).toString()
+                    });
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return response.text();
+                })
+                .then(text => {
+                    let result; try { result = JSON.parse(text); } catch (_) { throw new Error(text); }
+                    if (!result.success) {
+                        if (result.duplicate) {
+                            showDuplicateModal(result.existingData, result.duplicateType);
+                        } else {
+                            throw new Error(result.message || 'Lỗi không xác định');
+                        }
+                        return;
+                    }
+                    document.querySelector('form').reset();
+                    showSuccessModal(data, result.registrationId);
+                    // Update button to registered state
+                    const registerBtn = document.getElementById(`registerBtn-${data.examSession}`);
+                    if (registerBtn) {
+                        registerBtn.textContent = 'Đã đăng ký';
+                        registerBtn.classList.remove('active');
+                        registerBtn.classList.add('registered');
+                        registerBtn.disabled = true;
+                    }
+                })
+                .catch(err => {
+                    alert('Có lỗi xảy ra: ' + err.message);
+                })
+                .finally(() => {
+                    submitBtn.disabled = false; submitBtn.textContent = originalText;
+                });
+        }
+
+        // Check registration status by IP
+        async function checkRegistrationStatus() {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const ipData = await response.json();
+                const ip = ipData.ip;
+                
+                const res = await fetch(GOOGLE_SHEETS_WEBAPP_URL + `?action=checkIp&ipAddress=${encodeURIComponent(ip)}&examSession=${encodeURIComponent(CURRENT_SESSION)}`);
+                const text = await res.text();
                 let result; try { result = JSON.parse(text); } catch (_) { throw new Error(text); }
-                if (!result.success) throw new Error(result.message || 'Lỗi không xác định');
-                document.querySelector('form').reset();
-                showSuccessModal(data, result.registrationId);
-            })
-            .catch(err => {
-                alert('Có lỗi xảy ra: ' + err.message);
-            })
-            .finally(() => {
-                submitBtn.disabled = false; submitBtn.textContent = originalText;
-            });
+                
+                if (result.registered) {
+                    const registerBtn = document.getElementById(`registerBtn-${CURRENT_SESSION}`);
+                    if (registerBtn) {
+                        registerBtn.textContent = 'Đã đăng ký';
+                        registerBtn.classList.remove('active');
+                        registerBtn.classList.add('registered');
+                        registerBtn.disabled = true;
+                    }
+                }
+            } catch (err) {
+                console.error('Error checking registration status:', err.message);
+            }
         }
 
         // Navigation
@@ -445,6 +563,7 @@
             document.getElementById('registrationForm').style.display = 'none';
             document.getElementById('lookupForm').style.display = 'none';
             document.getElementById('lookupResults').style.display = 'none';
+            checkRegistrationStatus(); // Check registration status when showing exam list
         }
         function showRegistrationForm(sessionCode = 'tsa-2026-dot-1') {
             CURRENT_SESSION = sessionCode;
@@ -534,4 +653,4 @@
         showMainMenu();
     </script>
 </body>
-</html> 
+</html>
