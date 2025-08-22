@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký thi 2K8 - Google Sheets Simple</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+        @keyframes modalSlideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .modal-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .modal-subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+        .modal-content {
+            margin-bottom: 25px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f8f8f8;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #555;
+            min-width: 120px;
+        }
+        .info-value {
+            color: #333;
+            text-align: right;
+            flex: 1;
+            margin-left: 15px;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        .modal-btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+        .modal-btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .modal-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .modal-btn-secondary {
+            background: #f8f9fa;
+            color: #666;
+            border: 2px solid #e9ecef;
+        }
+        .modal-btn-secondary:hover {
+            background: #e9ecef;
+            color: #333;
+        }
+        .success-icon {
+            color: #28a745;
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        .confirm-icon {
+            color: #ffc107;
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        .registration-id {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: center;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="assets/Bản sao của AECK (1).png" alt="Logo">
+        </div>
+
+        <!-- Main Menu -->
+        <div class="main-menu" id="mainMenu">
+            <div class="card-container">
+                <div class="card" onclick="showExamList()">
+                    <div class="card-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <h2 class="card-title">ĐĂNG KÝ THI</h2>
+                    <p class="card-description">Đăng ký tham gia các đợt thi TSA</p>
+                </div>
+
+                <div class="card" onclick="showLookupForm()">
+                    <div class="card-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h2 class="card-title">TRA CỨU</h2>
+                    <p class="card-description">Tra cứu thông tin đăng ký</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exam List -->
+        <div class="exam-list" id="examList" style="display: none;">
+            <div class="back-button" onclick="showMainMenu()">
+                <i class="fas fa-arrow-left"></i> Quay lại
+            </div>
+
+            <h2 class="section-title">Danh sách các kỳ thi</h2>
+
+            <div class="exam-grid">
+                <div class="exam-card">
+                    <div class="exam-header">
+                        <h3>Bài thi TSA 2026 chính thức - Đợt 1</h3>
+                        <span class="status-badge active">Thi trực tuyến</span>
+                    </div>
+                    <div class="exam-info">
+                        <div class="info-row">
+                            <span class="label">Hình thức thi:</span>
+                            <span class="value">Thi trực tuyến</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Thời gian đăng ký:</span>
+                            <span class="value">01/12/2024 - 31/12/2024</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Lệ phí:</span>
+                            <span class="value">Miễn phí</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Thời gian thi:</span>
+                            <span class="value">18/01/2026 - 19/01/2026</span>
+                        </div>
+                    </div>
+                    <button class="register-btn active" onclick="showRegistrationForm('tsa-2026-dot-1')">Đăng ký</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Registration Form -->
+        <div class="registration-form" id="registrationForm" style="display: none;">
+            <div class="back-button" onclick="showExamList()">
+                <i class="fas fa-arrow-left"></i> Quay lại
+            </div>
+
+            <h2 class="section-title">Đăng ký thi</h2>
+            <h3 class="exam-title">Bài thi TSA 2026 chính thức - Đợt 1</h3>
+
+            <form class="form-container" onsubmit="handleSubmit(event)">
+                <div class="form-group">
+                    <label for="fullName">Họ và tên *</label>
+                    <input type="text" id="fullName" name="fullName" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Số điện thoại *</label>
+                    <input type="tel" id="phone" name="phone" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="facebook">Link Facebook *</label>
+                    <input type="url" id="facebook" name="facebook" required placeholder="https://facebook.com/your-profile">
+                </div>
+
+                <div class="form-group">
+                    <label for="province">Tỉnh/Thành phố *</nlabel>
+                    <select id="province" name="province" required>
+                        <option value="">Chọn tỉnh/thành phố</option>
+                        <option>Hà Nội</option>
+                        <option>TP. Hồ Chí Minh</option>
+                        <option>Đà Nẵng</option>
+                        <option>Hải Phòng</option>
+                        <option>Cần Thơ</option>
+                        <option>Cao Bằng</option>
+                        <option>Hà Giang</option>
+                        <option>Lạng Sơn</option>
+                        <option>Yên Bái</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="target">Đối tượng *</label>
+                    <select id="target" name="target" required>
+                        <option value="">Chọn đối tượng</option>
+                        <option value="2k8">2K8</option>
+                        <option value="2k9">2K9</option>
+                        <option value="tstd">TSTD</option>
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" onclick="showExamList()">Hủy</button>
+                    <button type="submit" class="btn-submit">Đăng ký</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Lookup Form -->
+        <div class="lookup-form" id="lookupForm" style="display: none;">
+            <div class="back-button" onclick="showMainMenu()">
+                <i class="fas fa-arrow-left"></i> Quay lại
+            </div>
+
+            <h2 class="section-title">Tra cứu kết quả thi</h2>
+
+            <form class="form-container" onsubmit="handleLookup(event)">
+                <div class="form-group">
+                    <label for="lookupEmail">Email *</label>
+                    <input type="email" id="lookupEmail" name="lookupEmail" required placeholder="Nhập email đã đăng ký">
+                </div>
+
+                <div class="form-group">
+                    <label for="examSession">Đợt thi *</label>
+                    <select id="examSession" name="examSession" required>
+                        <option value="">Chọn đợt thi</option>
+                        <option value="tsa-2026-dot-1">Bài thi TSA 2026 chính thức - Đợt 1</option>
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" onclick="showMainMenu()">Hủy</button>
+                    <button type="submit" class="btn-submit">Tra cứu</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Lookup Results -->
+        <div class="lookup-results" id="lookupResults" style="display: none;">
+            <div class="back-button" onclick="showLookupForm()">
+                <i class="fas fa-arrow-left"></i> Quay lại
+            </div>
+
+            <h2 class="section-title">Kết quả tra cứu</h2>
+            <div class="result-container" id="resultContainer"></div>
+        </div>
+    </div>
+
+    <!-- Custom Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="modal">
+            <div class="modal-header">
+                <div id="modalIcon"></div>
+                <div class="modal-title" id="modalTitle"></div>
+                <div class="modal-subtitle" id="modalSubtitle"></div>
+            </div>
+            <div class="modal-content" id="modalContent"></div>
+            <div class="modal-actions" id="modalActions"></div>
+        </div>
+    </div>
+
+    <script>
+        // Config
+        const GOOGLE_SHEETS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyA7TCmEzS_FwU2KYcOKLfTFDmy4xlgpL0qOp_FGXouv0KgpAKsdcpfSeexU9LW6AR4dg/exec';
+        let CURRENT_SESSION = 'tsa-2026-dot-1';
+        const EXAM_NAMES = { 'tsa-2026-dot-1': 'Bài thi TSA 2026 chính thức - Đợt 1' };
+
+        // Modal functions
+        function showModal(title, subtitle, content, actions) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalSubtitle').textContent = subtitle;
+            document.getElementById('modalContent').innerHTML = content;
+            document.getElementById('modalActions').innerHTML = actions;
+            document.getElementById('modalOverlay').style.display = 'flex';
+        }
+        function hideModal() {
+            document.getElementById('modalOverlay').style.display = 'none';
+        }
+        function showConfirmModal(data) {
+            const content = `
+                <div class="info-row">
+                    <span class="info-label">Đợt thi:</span>
+                    <span class="info-value">${EXAM_NAMES[data.examSession]}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Họ và tên:</span>
+                    <span class="info-value">${data.fullName}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Email:</span>
+                    <span class="info-value">${data.email}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Số điện thoại:</span>
+                    <span class="info-value">${data.phone}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Facebook:</span>
+                    <span class="info-value">${data.facebook}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Tỉnh/Thành phố:</span>
+                    <span class="info-value">${data.province}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Đối tượng:</span>
+                    <span class="info-value">${data.target}</span>
+                </div>
+            `;
+            const actions = `
+                <button class="modal-btn modal-btn-secondary" onclick="hideModal()">Chỉnh sửa</button>
+                <button class="modal-btn modal-btn-primary" onclick="submitRegistration()">Xác nhận</button>
+            `;
+            document.getElementById('modalIcon').innerHTML = '<i class="fas fa-exclamation-triangle confirm-icon"></i>';
+            showModal('Xác nhận thông tin', 'Vui lòng kiểm tra lại thông tin trước khi đăng ký', content, actions);
+        }
+        function showSuccessModal(data, registrationId) {
+            const content = `
+                <div class="info-row">
+                    <span class="info-label">Đợt thi:</span>
+                    <span class="info-value">${EXAM_NAMES[data.examSession]}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Họ và tên:</span>
+                    <span class="info-value">${data.fullName}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Email:</span>
+                    <span class="info-value">${data.email}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Số điện thoại:</span>
+                    <span class="info-value">${data.phone}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Tỉnh/Thành phố:</span>
+                    <span class="info-value">${data.province}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Đối tượng:</span>
+                    <span class="info-value">${data.target}</span>
+                </div>
+                <div class="registration-id">
+                    Mã đăng ký: ${registrationId}
+                </div>
+            `;
+            const actions = `
+                <button class="modal-btn modal-btn-primary" onclick="hideModal(); showExamList();">Hoàn tất</button>
+            `;
+            document.getElementById('modalIcon').innerHTML = '<i class="fas fa-check-circle success-icon"></i>';
+            showModal('Đăng ký thành công!', 'Thông tin đã được lưu vào hệ thống', content, actions);
+        }
+        let pendingRegistrationData = null;
+        function submitRegistration() {
+            if (!pendingRegistrationData) return;
+            const data = pendingRegistrationData;
+            pendingRegistrationData = null;
+            hideModal();
+            
+            const submitBtn = document.querySelector('.btn-submit');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true; submitBtn.textContent = 'Đang gửi...';
+
+            fetch(GOOGLE_SHEETS_WEBAPP_URL + '?v=1', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+                body: new URLSearchParams({ payload: JSON.stringify(data) }).toString()
+            })
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return response.text();
+            })
+            .then(text => {
+                let result; try { result = JSON.parse(text); } catch (_) { throw new Error(text); }
+                if (!result.success) throw new Error(result.message || 'Lỗi không xác định');
+                document.querySelector('form').reset();
+                showSuccessModal(data, result.registrationId);
+            })
+            .catch(err => {
+                alert('Có lỗi xảy ra: ' + err.message);
+            })
+            .finally(() => {
+                submitBtn.disabled = false; submitBtn.textContent = originalText;
+            });
+        }
+
+        // Navigation
+        function showMainMenu() {
+            document.getElementById('mainMenu').style.display = 'block';
+            document.getElementById('examList').style.display = 'none';
+            document.getElementById('registrationForm').style.display = 'none';
+            document.getElementById('lookupForm').style.display = 'none';
+            document.getElementById('lookupResults').style.display = 'none';
+        }
+        function showExamList() {
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('examList').style.display = 'block';
+            document.getElementById('registrationForm').style.display = 'none';
+            document.getElementById('lookupForm').style.display = 'none';
+            document.getElementById('lookupResults').style.display = 'none';
+        }
+        function showRegistrationForm(sessionCode = 'tsa-2026-dot-1') {
+            CURRENT_SESSION = sessionCode;
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('examList').style.display = 'none';
+            document.getElementById('registrationForm').style.display = 'block';
+            document.getElementById('lookupForm').style.display = 'none';
+            document.getElementById('lookupResults').style.display = 'none';
+        }
+        function showLookupForm() {
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('examList').style.display = 'none';
+            document.getElementById('registrationForm').style.display = 'none';
+            document.getElementById('lookupForm').style.display = 'block';
+            document.getElementById('lookupResults').style.display = 'none';
+        }
+        function showLookupResults() {
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('examList').style.display = 'none';
+            document.getElementById('registrationForm').style.display = 'none';
+            document.getElementById('lookupForm').style.display = 'none';
+            document.getElementById('lookupResults').style.display = 'block';
+        }
+
+        // Submit registration with custom modal
+        async function handleSubmit(event) {
+            event.preventDefault();
+
+            const formData = new FormData(event.target);
+            const data = {
+                fullName: formData.get('fullName'),
+                email: formData.get('email'),
+                phone: formData.get('phone'),
+                facebook: formData.get('facebook'),
+                province: formData.get('province'),
+                target: formData.get('target'),
+                examSession: CURRENT_SESSION
+            };
+
+            // Basic validation
+            if (!data.fullName || !data.email || !data.phone || !data.facebook || !data.province || !data.target) {
+                alert('Vui lòng điền đầy đủ thông tin!');
+                return;
+            }
+
+            // Show confirmation modal
+            pendingRegistrationData = data;
+            showConfirmModal(data);
+        }
+
+        // Lookup (simple)
+        async function handleLookup(event) {
+            event.preventDefault();
+            const email = document.getElementById('lookupEmail').value.trim();
+            const examSession = document.getElementById('examSession').value;
+            if (!email || !examSession) { alert('Vui lòng nhập đủ thông tin'); return; }
+            try {
+                const res = await fetch(GOOGLE_SHEETS_WEBAPP_URL + `?action=lookup&email=${encodeURIComponent(email)}&examSession=${encodeURIComponent(examSession)}`);
+                const text = await res.text();
+                let result; try { result = JSON.parse(text); } catch (_) { throw new Error(text); }
+                if (result.success && result.data) {
+                    document.getElementById('resultContainer').innerHTML = `
+                        <div class="result-card">
+                            <div class="result-header">
+                                <h3>Kết quả tra cứu</h3>
+                                <div class="student-info"><strong>${result.data.fullName}</strong> - ${result.data.email}</div>
+                            </div>
+                            <div class="result-details">
+                                <div class="detail-row"><span class="detail-label">Số điện thoại:</span><span class="detail-value">${result.data.phone}</span></div>
+                                <div class="detail-row"><span class="detail-label">Facebook:</span><span class="detail-value"><a href="${result.data.facebook}" target="_blank">${result.data.facebook}</a></span></div>
+                                <div class="detail-row"><span class="detail-label">Tỉnh/Thành phố:</span><span class="detail-value">${result.data.province}</span></div>
+                                <div class="detail-row"><span class="detail-label">Đối tượng:</span><span class="detail-value">${result.data.target}</span></div>
+                                <div class="detail-row"><span class="detail-label">Đợt thi:</span><span class="detail-value">${result.data.examSession}</span></div>
+                            </div>
+                        </div>
+                    `;
+                    showLookupResults();
+                } else {
+                    alert(result.message || 'Không tìm thấy thông tin');
+                }
+            } catch (err) {
+                alert('Lỗi tra cứu: ' + err.message);
+            }
+        }
+
+        // Init
+        showMainMenu();
+    </script>
+</body>
+</html> 
