@@ -151,6 +151,72 @@
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(192, 0, 0, 0.4);
         }
+
+        /* Score Display Styling */
+        .score-display {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .score-box {
+            background: #DC1E2D;
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            flex: 1;
+        }
+
+        .score-title {
+            font-size: 20px;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .score-box.overall {
+            flex: none;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .score-box .big-score {
+            font-size: 72px;
+            font-weight: bold;
+            margin: 15px 0;
+            line-height: 1;
+        }
+
+        .score-box .score-number {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 15px 0;
+            line-height: 1;
+        }
+
+        .score-range {
+            font-size: 16px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .score-label {
+            font-size: 15px;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .overall-label {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .test-report {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
@@ -201,7 +267,7 @@
                         </div>
                         <div class="info-row">
                             <span class="label">Thời gian đăng ký:</span>
-                            <span class="value">22/08/2025 - 23/08/2025</span>
+                            <span class="value">01/12/2024 - 31/12/2024</span>
                         </div>
                         <div class="info-row">
                             <span class="label">Lệ phí:</span>
@@ -209,7 +275,7 @@
                         </div>
                         <div class="info-row">
                             <span class="label">Thời gian thi:</span>
-                            <span class="value">24/08/2025 - 25/08/2025</span>
+                            <span class="value">18/01/2026 - 19/01/2026</span>
                         </div>
                     </div>
                     <button class="register-btn registered" id="registerBtn-tsa-2026-dot-1" disabled>Hết hạn đăng ký</button>
@@ -291,7 +357,7 @@
             <form class="form-container" onsubmit="handleLookup(event)">
                 <div class="form-group">
                     <label for="lookupEmail">Email *</label>
-                    <input type="email" id="lookupEmail" name="lookupEmail" required placeholder="Nhập email đã đăng ký">
+                    <input type="email" id="lookupEmail" name="lookupEmail" required placeholder="Nhập email của bạn">
                 </div>
 
                 <div class="form-group">
@@ -335,7 +401,7 @@
 
     <script>
         // Config
-        const GOOGLE_SHEETS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyBXMtqsenvpeKn1pz-e9fg6TKB4Tu4vA0hYUohpx0u_F0RCtUPVFuMGTvAtAo-QkpibA/exec';
+        const GOOGLE_SHEETS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwSAr5wIVTcF4OD7M4CYyAjr0rb_Fe_cpc3YzFz8p7lIQpd9bo38ej7pZJmpgGANi96KQ/exec';
         let CURRENT_SESSION = 'tsa-2026-dot-1';
         const EXAM_NAMES = { 'tsa-2026-dot-1': 'Bài thi TSA 2026 chính thức - Đợt 1' };
 
@@ -614,29 +680,83 @@
             showConfirmModal(data);
         }
 
-        // Lookup (simple)
+        // Lookup for test scores
         async function handleLookup(event) {
             event.preventDefault();
             const email = document.getElementById('lookupEmail').value.trim();
             const examSession = document.getElementById('examSession').value;
-            if (!email || !examSession) { alert('Vui lòng nhập đủ thông tin'); return; }
+
+            if (!email || !examSession) {
+                alert('Vui lòng điền đầy đủ thông tin!');
+                return;
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert('Vui lòng nhập email hợp lệ!');
+                return;
+            }
+
             try {
-                const res = await fetch(GOOGLE_SHEETS_WEBAPP_URL + `?action=lookup&email=${encodeURIComponent(email)}&examSession=${encodeURIComponent(examSession)}`);
+                const res = await fetch(
+                    GOOGLE_SHEETS_WEBAPP_URL +
+                    `?action=lookup&email=${encodeURIComponent(email)}&examSession=${encodeURIComponent(examSession)}`
+                );
                 const text = await res.text();
-                let result; try { result = JSON.parse(text); } catch (_) { throw new Error(text); }
+                let result;
+                try { result = JSON.parse(text); } catch (e) { throw new Error(text); }
                 if (result.success && result.data) {
+                    const data = result.data;
+                    const total = parseFloat(data.irt) || 0;
+                    const toan = parseFloat(data.toan) || 0;
+                    const docHieu = parseFloat(data.docHieu) || 0;
+                    const khoaHoc = parseFloat(data.khoaHoc) || 0;
+
                     document.getElementById('resultContainer').innerHTML = `
-                        <div class="result-card">
-                            <div class="result-header">
-                                <h3>Kết quả tra cứu</h3>
-                                <div class="student-info"><strong>${result.data.fullName}</strong> - ${result.data.email}</div>
+                        <div class="test-report">
+                            <div class="report-header">
+                                <h1 class="report-title" style="color: #DC1E2D;">GIẤY CHỨNG NHẬN KẾT QUẢ THI</h1>
+                                <h2 class="report-subtitle" style="color: #666666;">TEST REPORT FORM</h2>
                             </div>
-                            <div class="result-details">
-                                <div class="detail-row"><span class="detail-label">Số điện thoại:</span><span class="detail-value">${result.data.phone}</span></div>
-                                <div class="detail-row"><span class="detail-label">Facebook:</span><span class="detail-value"><a href="${result.data.facebook}" target="_blank">${result.data.facebook}</a></span></div>
-                                <div class="detail-row"><span class="detail-label">Tỉnh/Thành phố:</span><span class="detail-value">${result.data.province}</span></div>
-                                <div class="detail-row"><span class="detail-label">Đối tượng:</span><span class="detail-value">${result.data.target}</span></div>
-                                <div class="detail-row"><span class="detail-label">Đợt thi:</span><span class="detail-value">${result.data.examSession}</span></div>
+                            
+                            <div class="student-info" style="margin-bottom: 30px;">
+                                <div class="info-row" style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                    <span>Email:</span>
+                                    <span>${data.email}</span>
+                                </div>
+                                <div class="info-row" style="display: flex; justify-content: space-between;">
+                                    <span>ID học sinh:</span>
+                                    <span>${data.idHs}</span>
+                                </div>
+                            </div>
+
+                            <div class="scores">
+                                <div class="overall-score" style="margin-bottom: 20px;">
+                                    <div style="color: #333; margin-bottom: 10px;">Điểm bài thi - Overall score</div>
+                                    <div style="font-size: 48px; font-weight: bold; color: #DC1E2D;">${data.irt || '0'}</div>
+                                </div>
+
+                                <div class="detail-scores">
+                                    <div class="score-item">
+                                        <div class="score">${data.toan || '0'}</div>
+                                        <div class="score-range">0-40</div>
+                                        <div class="score-label">Tư duy Toán học<br>Mathematical thinking skills</div>
+                                    </div>
+                                    <div class="score-item">
+                                        <div class="score">${data.docHieu || '0'}</div>
+                                        <div class="score-range">0-20</div>
+                                        <div class="score-label">Tư duy Đọc hiểu<br>Reading comprehension skills</div>
+                                    </div>
+                                    <div class="score-item">
+                                        <div class="score">${data.khoaHoc || '0'}</div>
+                                        <div class="score-range">0-40</div>
+                                        <div class="score-label">Tư duy Khoa học/Giải quyết vấn đề<br>Scientific thinking skills/Problem solving thinking skills</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="actions" style="margin-top: 20px; text-align: center;">
+                                <button onclick="showLookupForm()" style="background: #DC1E2D; color: white; padding: 12px 30px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">Tra cứu lại</button>
                             </div>
                         </div>
                     `;
@@ -645,7 +765,8 @@
                     alert(result.message || 'Không tìm thấy thông tin');
                 }
             } catch (err) {
-                alert('Lỗi tra cứu: ' + err.message);
+                console.error('Error:', err);
+                alert('Có lỗi xảy ra khi tra cứu. Vui lòng thử lại sau.');
             }
         }
 
