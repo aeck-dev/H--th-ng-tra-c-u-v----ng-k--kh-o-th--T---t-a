@@ -33,16 +33,121 @@ function showLookupForm() {
     document.getElementById('lookupResults').style.display = 'none';
 }
 
-function showLookupResults() {
+function showLookupResults(data) {
     document.getElementById('mainMenu').style.display = 'none';
     document.getElementById('examList').style.display = 'none';
     document.getElementById('registrationForm').style.display = 'none';
     document.getElementById('lookupForm').style.display = 'none';
     document.getElementById('lookupResults').style.display = 'block';
+
+    // Hiển thị kết quả
+    const resultsDiv = document.getElementById('lookupResults');
+    
+    if (!data.success) {
+        resultsDiv.innerHTML = `
+            <div class="error-message">
+                <h3>Không tìm thấy thông tin</h3>
+                <p>${data.message}</p>
+                <button onclick="showLookupForm()" class="btn btn-primary">Thử lại</button>
+            </div>
+        `;
+        return;
+    }
+
+    const studentData = data.data;
+    resultsDiv.innerHTML = `
+        <div class="test-report">
+            <h1 class="report-title">GIẤY CHỨNG NHẬN KẾT QUẢ THI</h1>
+            <h2 class="report-subtitle">TEST REPORT FORM</h2>
+            
+            <div class="student-info">
+                <div class="info-row">
+                    <span class="info-label">Email:</span>
+                    <span class="info-value">${studentData.email}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">ID học sinh:</span>
+                    <span class="info-value">${studentData.idHs}</span>
+                </div>
+            </div>
+
+            <div class="scores">
+                <div class="overall-score">
+                    <h3>Điểm bài thi - Overall score</h3>
+                    <div class="score">${studentData.irt || '0'}</div>
+                    <div class="score-range">0-100</div>
+                </div>
+
+                <div class="detail-scores">
+                    <div class="score-item">
+                        <div class="score">${studentData.toan || '0'}</div>
+                        <div class="score-range">0-40</div>
+                        <div class="score-label">Tư duy Toán học<br>Mathematical thinking skills</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score">${studentData.docHieu || '0'}</div>
+                        <div class="score-range">0-20</div>
+                        <div class="score-label">Tư duy Đọc hiểu<br>Reading comprehension skills</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score">${studentData.khoaHoc || '0'}</div>
+                        <div class="score-range">0-40</div>
+                        <div class="score-label">Tư duy Khoa học/Giải quyết vấn đề<br>Scientific thinking skills/Problem-solving thinking skills</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button onclick="showLookupForm()" class="btn btn-primary">Tra cứu lại</button>
+            </div>
+        </div>
+    `;
 }
 
 // Google Sheets API Configuration
-const GOOGLE_SHEETS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyA7TCmEzS_FwU2KYcOKLfTFDmy4xlgpL0qOp_FGXouv0KgpAKsdcpfSeexU9LW6AR4dg/exec';
+const GOOGLE_SHEETS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbybhzrpMj_rn0RA0MpwCz0RUKXa4cDmO1i_7xUr72PA5BDxnCfkoNb98L87T0z3NBNhtA/exec';
+
+// Lookup form submission handler
+async function handleLookup(event) {
+    event.preventDefault();
+
+    const email = document.getElementById('lookupEmail').value.trim();
+    const examSession = document.getElementById('examSession').value;
+
+    if (!email || !examSession) {
+        alert('Vui lòng nhập email và chọn đợt thi');
+        return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        alert('Vui lòng nhập email hợp lệ!');
+        return;
+    }
+
+    try {
+        const response = await fetch(GOOGLE_SHEETS_WEBAPP_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'lookup',
+                email: email,
+                examSession: examSession
+            })
+        });
+
+        const data = await response.json();
+        showLookupResults(data);
+    } catch (error) {
+        console.error('Error:', error);
+        showLookupResults({
+            success: false,
+            message: 'Có lỗi xảy ra khi tra cứu. Vui lòng thử lại sau.'
+        });
+    }
+}
 
 // Form submission handler
 async function handleSubmit(event) {
@@ -210,11 +315,17 @@ async function handleLookup(event) {
 
     const email = document.getElementById('lookupEmail').value.trim();
     const examSession = document.getElementById('examSession').value;
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const resultContainer = document.getElementById('resultContainer');
 
     if (!email || !examSession) {
         alert('Vui lòng điền đầy đủ thông tin!');
         return;
     }
+
+    // Show loading spinner
+    loadingSpinner.style.display = 'block';
+    resultContainer.style.display = 'none';
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
         alert('Vui lòng nhập email hợp lệ!');
@@ -229,6 +340,10 @@ async function handleLookup(event) {
         const text = await res.text();
         let result;
         try { result = JSON.parse(text); } catch (e) { throw new Error(text); }
+
+        // Hide loading spinner
+        loadingSpinner.style.display = 'none';
+        resultContainer.style.display = 'block';
 
         if (result.success && result.data) {
             document.getElementById('lookupForm').style.display = 'none';
@@ -255,6 +370,9 @@ async function handleLookup(event) {
     } catch (err) {
         console.error(err);
         alert('Lỗi khi tra cứu: ' + err.message);
+    } finally {
+        // Always hide loading spinner in case of error
+        loadingSpinner.style.display = 'none';
     }
 }
 
