@@ -364,7 +364,7 @@
                     <label for="examSession">Đợt thi *</label>
                     <select id="examSession" name="examSession" required>
                         <option value="">Chọn đợt thi</option>
-                        <option value="tsa-2026-dot-1">Bài thi TSA 2026 chính thức - Đợt 1</option>
+                        <option value="tsa-2026-dot-1">Bài thi TSA 2026 chính thức - Đợt 2</option>
                     </select>
                 </div>
 
@@ -413,7 +413,7 @@
         // Config
         const GOOGLE_SHEETS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwSAr5wIVTcF4OD7M4CYyAjr0rb_Fe_cpc3YzFz8p7lIQpd9bo38ej7pZJmpgGANi96KQ/exec';
         let CURRENT_SESSION = 'tsa-2026-dot-1';
-        const EXAM_NAMES = { 'tsa-2026-dot-1': 'Bài thi TSA 2026 chính thức - Đợt 1' };
+        const EXAM_NAMES = { 'tsa-2026-dot-1': 'Bài thi TSA 2026 chính thức - Đợt 2' };
 
         // Modal functions
         function showModal(title, subtitle, content, actions) {
@@ -783,9 +783,9 @@
 
                     // Kiểm tra top 3 và thêm thông báo chúc mừng
                     const specialEmails = {
-                        'hockhonggioidau@gmail.com': 1,
-                        'real.op07@gmail.com': 2,
-                        'kieulegiahung@gmail.com': 3
+                        'nguyentuan021207@gmail.com': 1,
+                        'batuyugi14@gmail.com': 2,
+                        'minh2k8hanoi@gmail.com': 3
                     };
 
                     if (specialEmails.hasOwnProperty(email.toLowerCase())) {
