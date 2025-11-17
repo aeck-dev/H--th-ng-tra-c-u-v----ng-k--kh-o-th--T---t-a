@@ -649,10 +649,12 @@
             margin: 0 0 20px 0;
             padding-bottom: 15px;
             border-bottom: 1px solid #f0f0f0;
+            text-align: left;
         }
 
         .exam-info-grid {
             margin-bottom: 20px;
+            text-align: left;
         }
 
         .info-row {
@@ -661,6 +663,7 @@
             padding: 8px 0;
             border-bottom: 1px solid #f8f8f8;
             gap: 15px;
+            justify-content: space-between;
         }
 
         .info-row:last-child {
@@ -671,6 +674,7 @@
             color: #666;
             font-size: 14px;
             flex: 1;
+            text-align: left;
         }
 
         .info-value {
@@ -679,36 +683,30 @@
             font-weight: 500;
             flex-shrink: 0;
             text-align: right;
+            display: flex;
+            justify-content: flex-end;
         }
 
-        .info-value.highlight {
-            background: #d4edda;
-            color: #28a745;
+        .info-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             padding: 4px 10px;
             border-radius: 6px;
             font-size: 13px;
             font-weight: 600;
-            display: inline-block;
+            white-space: nowrap;
         }
 
-        .info-value.badge-free {
+        .info-badge.highlight,
+        .info-badge.badge-free {
             background: #d4edda;
             color: #28a745;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 600;
-            display: inline-block;
         }
 
-        .info-value.badge-premium {
+        .info-badge.badge-premium {
             background: #f8d7da;
             color: #dc3545;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 600;
-            display: inline-block;
         }
 
         .card-actions {
@@ -1372,7 +1370,7 @@
                     <div class="exam-info-grid">
                         <div class="info-row">
                             <span class="info-label">Hình thức thi:</span>
-                            <span class="info-value highlight">Online</span>
+                            <span class="info-value"><span class="info-badge highlight">Online</span></span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">Ngày thi:</span>
@@ -1384,7 +1382,7 @@
                         </div>
                         <div class="info-row">
                             <span class="info-label">Hình thức đăng ký:</span>
-                            <span class="info-value ${registrationTypeBadge}">${registrationTypeDisplay}</span>
+                            <span class="info-value"><span class="info-badge ${registrationTypeBadge}">${registrationTypeDisplay}</span></span>
                         </div>
                     </div>
                     
@@ -1394,7 +1392,7 @@
                              <div class="card-action-buttons">
                                 <button class="register-btn registered">Đã đăng ký</button>
                              </div>` :
-                            `<span></span>
+                            `<div></div>
                              <div class="card-action-buttons">
                                 <button class="expired-btn" disabled>Hết hạn đăng ký</button>
                              </div>`
@@ -1443,9 +1441,9 @@
             
             // Lấy điểm từ dữ liệu thực tế
             const totalScore = parseFloat(result.irt_score) || 0;
-            const mathScore = parseInt(result.math_correct) || 0;
-            const readingScore = parseInt(result.reading_correct) || 0;
-            const scienceScore = parseInt(result.science_correct) || 0;
+            const mathScore = parseFloat(result.math_correct) || 0;
+            const readingScore = parseFloat(result.reading_correct) || 0;
+            const scienceScore = parseFloat(result.science_correct) || 0;
             
             // Lấy điểm IRT từng phần
             const irtMath = parseFloat(result.irt_math) || 0;
@@ -1480,7 +1478,7 @@
             const scoreBreakdownHtml = scoreBreakdown.map(item => `
                 <div class="tsa-score-row">
                     <span>${item.label}:</span>
-                    <span>${item.value}</span>
+                    <span>${Number.isInteger(item.value) ? item.value : item.value.toFixed(2)}</span>
                 </div>
             `).join('');
             const certificateNote = 'Đăng ký nhận chứng chỉ bản giấy đến <span>8/9/2025</span>';
@@ -1565,42 +1563,41 @@
                                     margin-bottom: 8px;
                                 ">Thông tin dự thi</h3>
                                 
-                                <div style="margin-bottom: 4px;">
+                                <div style="margin-bottom: 4px; display: flex; align-items: flex-start;">
                                     <span style="
-                                        display: inline;
                                         color: #666;
                                         font-size: 13px;
                                         margin-right: 8px;
+                                        white-space: nowrap;
                                     ">Hội đồng thi:</span>
                                     <span style="
-                                        display: inline;
                                         color: #333;
                                         font-size: 14px;
                                         line-height: 1.4;
                                     ">Hệ thống Khảo thí AECK</span>
                                 </div>
                                 
-                                <div style="margin-bottom: 4px;">
+                                <div style="margin-bottom: 4px; display: flex; align-items: flex-start;">
                                     <span style="
-                                        display: inline;
                                         color: #666;
                                         font-size: 13px;
                                         margin-right: 8px;
+                                        white-space: nowrap;
                                     ">Ngày thi:</span>
                                     <span style="
-                                        display: inline;
                                         color: #333;
                                         font-size: 14px;
                                         line-height: 1.4;
                                     ">${examDate}</span>
                                 </div>
                                 
-                                <div style="margin-bottom: 4px;">
+                                <div style="margin-bottom: 4px; display: flex; align-items: flex-start;">
                                     <span style="
-                                        display: inline;
                                         color: #666;
                                         font-size: 13px;
                                         margin-right: 8px;
+                                        white-space: nowrap;
+                                        line-height: 1.9;
                                     ">Hình thức thi:</span>
                                     <span style="
                                         display: inline-block;
@@ -1614,15 +1611,14 @@
                                     ">Online</span>
                                 </div>
                                 
-                                <div style="margin-bottom: 4px;">
+                                <div style="margin-bottom: 4px; display: flex; align-items: flex-start;">
                                     <span style="
-                                        display: inline;
                                         color: #666;
                                         font-size: 13px;
                                         margin-right: 8px;
+                                        white-space: nowrap;
                                     ">Số báo danh:</span>
                                     <span style="
-                                        display: inline;
                                         color: #333;
                                         font-size: 14px;
                                         line-height: 1.4;
