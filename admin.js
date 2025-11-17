@@ -6,8 +6,12 @@ class AECKAdmin {
         this.currentSession = null;
         this.useFirebase = false;
         this.initializeEventListeners();
-        this.initializeFirebase();
-        this.loadSessions();
+        this.init();
+    }
+
+    async init() {
+        await this.initializeFirebase();
+        await this.loadSessions();
         this.loadCurrentData();
     }
 
@@ -565,13 +569,30 @@ class AECKAdmin {
     }
 
     // Session Management Methods
-    loadSessions() {
+    async loadSessions() {
         try {
+            // Try Firebase first if available and connected
+            if (this.useFirebase && window.firebaseService && window.firebaseService.isConnected) {
+                console.log('🔥 Loading sessions from Firebase...');
+                const firebaseSessions = await window.firebaseService.getSessions();
+                if (firebaseSessions && firebaseSessions.length > 0) {
+                    this.sessions = firebaseSessions;
+                    console.log('Sessions loaded from Firebase:', this.sessions);
+                    // Also update localStorage for fallback
+                    localStorage.setItem('aeck_exam_sessions', JSON.stringify(this.sessions));
+                    this.renderSessions();
+                    this.updateSessionSelects();
+                    return;
+                }
+            }
+            
+            // Fallback to localStorage
+            console.log('📦 Loading sessions from localStorage...');
             const savedSessions = localStorage.getItem('aeck_exam_sessions');
             if (!savedSessions) {
                 // First time load - create default sessions
                 this.sessions = this.getDefaultSessions();
-                this.saveSessions(); // Save to localStorage immediately
+                await this.saveSessions(); // Save to both localStorage and Firebase
                 console.log('Created default sessions:', this.sessions);
             } else {
                 this.sessions = JSON.parse(savedSessions);
@@ -582,7 +603,7 @@ class AECKAdmin {
         } catch (error) {
             console.error('Lỗi tải sessions:', error);
             this.sessions = this.getDefaultSessions();
-            this.saveSessions();
+            await this.saveSessions();
             this.renderSessions();
             this.showToast('Lỗi tải danh sách đợt thi, sử dụng mặc định', 'warning');
         }
@@ -611,8 +632,23 @@ class AECKAdmin {
         ];
     }
 
-    saveSessions() {
+    async saveSessions() {
+        // Always save to localStorage for fallback
         localStorage.setItem('aeck_exam_sessions', JSON.stringify(this.sessions));
+        
+        // Also save to Firebase if available
+        if (this.useFirebase && window.firebaseService && window.firebaseService.isConnected && window.firebaseService.currentUser) {
+            try {
+                console.log('🔥 Saving sessions to Firebase...');
+                for (const session of this.sessions) {
+                    await window.firebaseService.createSession(session);
+                }
+                console.log('✅ Sessions saved to Firebase successfully');
+            } catch (error) {
+                console.warn('⚠️ Failed to save sessions to Firebase:', error);
+                this.showToast('Sessions saved locally, but Firebase sync failed', 'warning');
+            }
+        }
     }
 
     renderSessions() {
@@ -704,7 +740,7 @@ class AECKAdmin {
         });
     }
 
-    createSession() {
+    async createSession() {
         console.log('createSession called');
         const form = document.getElementById('sessionForm');
         if (!form) {
@@ -758,7 +794,7 @@ class AECKAdmin {
         }
 
         this.sessions.push(sessionData);
-        this.saveSessions();
+        await this.saveSessions();
         this.renderSessions();
         this.updateSessionSelects();
         this.closeSessionModal();
@@ -776,9 +812,9 @@ class AECKAdmin {
         }
     }
 
-    setDefaultSession(sessionCode) {
+    async setDefaultSession(sessionCode) {
         this.sessions.forEach(s => s.isDefault = (s.code === sessionCode));
-        this.saveSessions();
+        await this.saveSessions();
         this.renderSessions();
         this.updateSessionSelects();
         
@@ -786,13 +822,23 @@ class AECKAdmin {
         this.showToast(`Đã đặt "${session.name}" làm đợt thi mặc định`, 'success');
     }
 
-    deleteSession(sessionCode) {
+    async deleteSession(sessionCode) {
         const session = this.sessions.find(s => s.code === sessionCode);
         if (!session) return;
 
         if (confirm(`Bạn có chắc chắn muốn xóa đợt thi "${session.name}"?\nDữ liệu của đợt thi này cũng sẽ bị xóa.`)) {
-            // Remove session data
+            // Remove session data from localStorage
             localStorage.removeItem(`aeck_exam_results_${sessionCode}`);
+            
+            // Remove from Firebase if available
+            if (this.useFirebase && window.firebaseService && window.firebaseService.isConnected && window.firebaseService.currentUser) {
+                try {
+                    await window.firebaseService.deleteSession(sessionCode);
+                    console.log('✅ Session deleted from Firebase');
+                } catch (error) {
+                    console.warn('⚠️ Failed to delete session from Firebase:', error);
+                }
+            }
             
             // Remove from sessions list
             this.sessions = this.sessions.filter(s => s.code !== sessionCode);
@@ -802,7 +848,7 @@ class AECKAdmin {
                 this.sessions[0].isDefault = true;
             }
             
-            this.saveSessions();
+            await this.saveSessions();
             this.renderSessions();
             this.updateSessionSelects();
             
@@ -1033,8 +1079,8 @@ class AECKAdmin {
         document.querySelector('#sessionModal .btn-primary').setAttribute('onclick', 'createSession()');
     }
 
-    refreshSessions() {
-        this.loadSessions();
+    async refreshSessions() {
+        await this.loadSessions();
         this.showToast('Đã tải lại danh sách đợt thi', 'success');
     }
 }
@@ -1073,30 +1119,30 @@ function closeSessionModal() {
     window.aeckAdmin.closeSessionModal();
 }
 
-function createSession() {
+async function createSession() {
     console.log('Global createSession called');
     if (!window.aeckAdmin) {
         console.error('aeckAdmin not initialized');
         alert('Hệ thống chưa được khởi tạo');
         return;
     }
-    window.aeckAdmin.createSession();
+    await window.aeckAdmin.createSession();
 }
 
-function refreshSessions() {
-    window.aeckAdmin.refreshSessions();
+async function refreshSessions() {
+    await window.aeckAdmin.refreshSessions();
 }
 
 function selectSession(sessionCode) {
     window.aeckAdmin.selectSession(sessionCode);
 }
 
-function setDefaultSession(sessionCode) {
-    window.aeckAdmin.setDefaultSession(sessionCode);
+async function setDefaultSession(sessionCode) {
+    await window.aeckAdmin.setDefaultSession(sessionCode);
 }
 
-function deleteSession(sessionCode) {
-    window.aeckAdmin.deleteSession(sessionCode);
+async function deleteSession(sessionCode) {
+    await window.aeckAdmin.deleteSession(sessionCode);
 }
 
 function editSession(sessionCode) {
