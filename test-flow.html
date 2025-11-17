@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Admin-User Flow</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { border: 1px solid #ccc; padding: 15px; margin: 10px 0; }
+        .test-button { padding: 10px 15px; margin: 5px; background: #007bff; color: white; border: none; cursor: pointer; }
+        .test-output { background: #f8f9fa; padding: 10px; margin: 10px 0; border-left: 4px solid #007bff; }
+        pre { background: #f1f3f4; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Admin-User Data Flow</h1>
+    
+    <div class="test-section">
+        <h2>1. Check localStorage Data</h2>
+        <button class="test-button" onclick="checkData()">Kiểm tra dữ liệu hiện tại</button>
+        <div id="dataOutput" class="test-output"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Create Test Session</h2>
+        <button class="test-button" onclick="createTestSession()">Tạo session test</button>
+        <div id="sessionOutput" class="test-output"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Add Test Data to Session</h2>
+        <button class="test-button" onclick="addTestData()">Thêm dữ liệu test</button>
+        <div id="testDataOutput" class="test-output"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Test User Load Sessions</h2>
+        <button class="test-button" onclick="testUserLoad()">Test user load sessions</button>
+        <select id="testExamSession">
+            <option value="">Chọn đợt thi</option>
+        </select>
+        <div id="userOutput" class="test-output"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>5. Clear All Data</h2>
+        <button class="test-button" style="background: #dc3545;" onclick="clearAllData()">🗑️ Xóa tất cả dữ liệu</button>
+    </div>
+
+    <script>
+        function checkData() {
+            const sessions = localStorage.getItem('aeck_exam_sessions');
+            const output = document.getElementById('dataOutput');
+            
+            let html = '<h3>📦 localStorage Keys:</h3>';
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('aeck_')) {
+                    const value = localStorage.getItem(key);
+                    html += `<p><strong>${key}:</strong> ${value.length} chars</p>`;
+                }
+            }
+            
+            html += '<h3>🎯 Sessions Data:</h3>';
+            if (sessions) {
+                const sessionsList = JSON.parse(sessions);
+                html += `<pre>${JSON.stringify(sessionsList, null, 2)}</pre>`;
+                
+                sessionsList.forEach(session => {
+                    const sessionData = localStorage.getItem(`aeck_exam_results_${session.code}`);
+                    html += `<h4>📊 Data for ${session.code}:</h4>`;
+                    if (sessionData) {
+                        const data = JSON.parse(sessionData);
+                        html += `<p>Records: ${data.data ? data.data.length : 0}</p>`;
+                    } else {
+                        html += `<p style="color: red;">Không có dữ liệu</p>`;
+                    }
+                });
+            } else {
+                html += '<p style="color: red;">Không có sessions</p>';
+            }
+            
+            output.innerHTML = html;
+        }
+
+        function createTestSession() {
+            const testSession = {
+                code: 'test-2024',
+                name: 'Đợt Test 2024',
+                description: 'Session test cho admin-user flow',
+                status: 'active',
+                isDefault: true,
+                createdAt: new Date().toISOString(),
+                recordCount: 0
+            };
+
+            // Get existing sessions or create new array
+            let sessions = [];
+            const existingSessions = localStorage.getItem('aeck_exam_sessions');
+            if (existingSessions) {
+                sessions = JSON.parse(existingSessions);
+            }
+
+            // Remove existing test session if any
+            sessions = sessions.filter(s => s.code !== 'test-2024');
+            
+            // Add new test session
+            sessions.push(testSession);
+            
+            // Save to localStorage
+            localStorage.setItem('aeck_exam_sessions', JSON.stringify(sessions));
+            
+            document.getElementById('sessionOutput').innerHTML = 
+                `<p style="color: green;">✅ Đã tạo session test: ${testSession.code}</p>
+                <pre>${JSON.stringify(testSession, null, 2)}</pre>`;
+        }
+
+        function addTestData() {
+            const testData = {
+                data: [
+                    {
+                        'Email': 'test1@aeck.edu.vn',
+                        'Họ và tên': 'Nguyễn Văn Test',
+                        'Số báo danh': 'SBD001',
+                        'Điểm tổng': '850',
+                        'Xếp loại': 'Khá'
+                    },
+                    {
+                        'Email': 'test2@aeck.edu.vn', 
+                        'Họ và tên': 'Trần Thị Test',
+                        'Số báo danh': 'SBD002',
+                        'Điểm tổng': '900',
+                        'Xếp loại': 'Giỏi'
+                    }
+                ],
+                uploadedAt: new Date().toISOString(),
+                recordCount: 2
+            };
+
+            localStorage.setItem('aeck_exam_results_test-2024', JSON.stringify(testData));
+            
+            document.getElementById('testDataOutput').innerHTML = 
+                `<p style="color: green;">✅ Đã thêm ${testData.data.length} bản ghi vào session test-2024</p>
+                <pre>${JSON.stringify(testData, null, 2)}</pre>`;
+        }
+
+        function testUserLoad() {
+            const select = document.getElementById('testExamSession');
+            select.innerHTML = '<option value="">Chọn đợt thi</option>';
+            
+            console.log('🔍 Testing user loadExamSessions function...');
+            
+            const sessions = localStorage.getItem('aeck_exam_sessions');
+            const output = document.getElementById('userOutput');
+            
+            let html = '<h3>🔍 User Load Process:</h3>';
+            
+            if (!sessions) {
+                html += '<p style="color: red;">❌ Không có sessions từ admin</p>';
+                output.innerHTML = html;
+                return;
+            }
+            
+            const sessionsList = JSON.parse(sessions);
+            html += `<p>📦 Found ${sessionsList.length} sessions from admin</p>`;
+            
+            let validSessions = 0;
+            sessionsList.forEach(session => {
+                html += `<p>🔎 Checking session: <strong>${session.code}</strong> (status: ${session.status})</p>`;
+                
+                const sessionData = localStorage.getItem(`aeck_exam_results_${session.code}`);
+                const hasData = sessionData && JSON.parse(sessionData).data.length > 0;
+                
+                html += `<p style="margin-left: 20px;">📊 Has data: ${hasData ? 'YES' : 'NO'}</p>`;
+                
+                if (hasData && session.status === 'active') {
+                    html += `<p style="margin-left: 20px; color: green;">✅ Will be shown to user</p>`;
+                    
+                    const option = document.createElement('option');
+                    option.value = session.code;
+                    const dataCount = JSON.parse(sessionData).data.length;
+                    option.textContent = `${session.name} (${dataCount} thí sinh)`;
+                    select.appendChild(option);
+                    validSessions++;
+                } else {
+                    html += `<p style="margin-left: 20px; color: red;">❌ Will NOT be shown - hasData: ${hasData}, status: ${session.status}</p>`;
+                }
+            });
+            
+            html += `<p><strong>📊 Result: ${validSessions} sessions sẽ hiển thị cho user</strong></p>`;
+            output.innerHTML = html;
+        }
+
+        function clearAllData() {
+            const keys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('aeck_')) {
+                    keys.push(key);
+                }
+            }
+            
+            keys.forEach(key => localStorage.removeItem(key));
+            
+            alert(`Đã xóa ${keys.length} keys từ localStorage`);
+            location.reload();
+        }
+
+        // Auto check data on load
+        window.onload = function() {
+            checkData();
+        };
+    </script>
+</body>
+</html>

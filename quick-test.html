@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        button { padding: 10px 20px; margin: 10px; background: #007bff; color: white; border: none; cursor: pointer; }
+        .red { background: #dc3545; }
+        .success { color: green; }
+        .error { color: red; }
+        pre { background: #f8f9fa; padding: 10px; border-left: 4px solid #007bff; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Quick Test Admin-User Flow</h1>
+    
+    <div>
+        <button onclick="createData()">1. Tạo dữ liệu test</button>
+        <button onclick="testUser()">2. Test user load</button>
+        <button onclick="openUser()">3. Mở trang user</button>
+        <button onclick="clearData()" class="red">4. Xóa dữ liệu</button>
+    </div>
+    
+    <div id="output"></div>
+
+    <script>
+        function createData() {
+            // Create test session
+            const testSession = {
+                code: 'test-2024',
+                name: 'Đợt Test 2024',
+                description: 'Session test',
+                status: 'active',
+                isDefault: true,
+                createdAt: new Date().toISOString(),
+                recordCount: 2
+            };
+
+            localStorage.setItem('aeck_exam_sessions', JSON.stringify([testSession]));
+
+            // Create test data
+            const testData = {
+                data: [
+                    {
+                        'Email': 'test1@aeck.edu.vn',
+                        'Họ và tên': 'Nguyễn Văn Test',
+                        'Số báo danh': 'SBD001',
+                        'Điểm tổng': '850',
+                        'Xếp loại': 'Khá'
+                    },
+                    {
+                        'Email': 'test2@aeck.edu.vn', 
+                        'Họ và tên': 'Trần Thị Test',
+                        'Số báo danh': 'SBD002',
+                        'Điểm tổng': '900',
+                        'Xếp loại': 'Giỏi'
+                    }
+                ],
+                uploadedAt: new Date().toISOString(),
+                recordCount: 2
+            };
+
+            localStorage.setItem('aeck_exam_results_test-2024', JSON.stringify(testData));
+            
+            document.getElementById('output').innerHTML = 
+                '<p class="success">✅ Đã tạo session "test-2024" với 2 bản ghi dữ liệu!</p>';
+        }
+
+        function testUser() {
+            let html = '<h3>🔍 Test User Load Process:</h3>';
+            
+            const sessions = localStorage.getItem('aeck_exam_sessions');
+            if (!sessions) {
+                html += '<p class="error">❌ Không có sessions</p>';
+                document.getElementById('output').innerHTML = html;
+                return;
+            }
+            
+            const sessionsList = JSON.parse(sessions);
+            html += `<p>📦 Found ${sessionsList.length} sessions</p>`;
+            
+            sessionsList.forEach(session => {
+                html += `<p><strong>${session.code}</strong> - Status: ${session.status}</p>`;
+                
+                const sessionData = localStorage.getItem(`aeck_exam_results_${session.code}`);
+                const hasData = sessionData && JSON.parse(sessionData).data.length > 0;
+                
+                if (hasData && session.status === 'active') {
+                    html += `<p style="color: green; margin-left: 20px;">✅ User sẽ thấy session này</p>`;
+                } else {
+                    html += `<p style="color: red; margin-left: 20px;">❌ User KHÔNG thấy - hasData: ${hasData}, status: ${session.status}</p>`;
+                }
+            });
+            
+            document.getElementById('output').innerHTML = html;
+        }
+
+        function openUser() {
+            window.open('index.html', '_blank');
+        }
+
+        function clearData() {
+            const keys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('aeck_')) {
+                    keys.push(key);
+                }
+            }
+            
+            keys.forEach(key => localStorage.removeItem(key));
+            document.getElementById('output').innerHTML = 
+                `<p class="success">🗑️ Đã xóa ${keys.length} keys</p>`;
+        }
+    </script>
+</body>
+</html>

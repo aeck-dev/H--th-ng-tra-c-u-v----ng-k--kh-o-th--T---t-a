@@ -648,6 +648,58 @@ body {
     text-align: center;
 }
 
+.actions .btn {
+    margin: 0 10px;
+}
+
+/* Additional Info Styles */
+.additional-info {
+    margin: 30px 0;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 10px;
+    border-left: 4px solid #C00000;
+}
+
+.info-section h4 {
+    color: #C00000;
+    margin-bottom: 15px;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border-left: 3px solid #C00000;
+}
+
+.detail-item span:first-child {
+    font-weight: 600;
+    color: #333;
+}
+
+.detail-item span:last-child {
+    font-weight: 700;
+    color: #C00000;
+    background: #fff2f2;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
 .small-text {
     font-size: 14px;
     color: #666;

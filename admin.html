@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AECK Admin Panel - Quản lý kết quả thi</title>
+    <link rel="stylesheet" href="admin-style.css">
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+</head>
+<body>
+    <div class="admin-container">
+        <header class="admin-header">
+            <div class="logo-section">
+                <img src="assets/logo.png" alt="AECK Logo" class="admin-logo">
+                <h1>🏛️ AECK Admin Panel</h1>
+                <p>Hệ thống quản lý kết quả thi TSA 2026</p>
+            </div>
+            
+            <!-- Firebase Status & Auth -->
+            <div class="firebase-status">
+                <div id="connectionStatus" class="status-indicator">
+                    <span class="status-dot offline"></span>
+                    <span>Connecting to Firebase...</span>
+                </div>
+                <div id="authSection">
+                    <div id="loginForm" class="auth-form">
+                        <input type="email" id="adminEmail" placeholder="Admin Email" required>
+                        <input type="password" id="adminPassword" placeholder="Password" required>
+                        <button onclick="loginAdmin()" class="btn btn-primary">Login</button>
+                    </div>
+                    <div id="userInfo" class="user-info" style="display: none;">
+                        <span id="userEmail"></span>
+                        <button onclick="logoutAdmin()" class="btn btn-secondary">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="admin-main">
+            <!-- Exam Session Management -->
+            <section class="session-management">
+                <div class="section-header">
+                    <h2>🎯 Quản lý Đợt Thi</h2>
+                    <div class="session-controls">
+                        <button class="btn btn-success" onclick="showCreateSessionModal()">➕ Tạo đợt thi mới</button>
+                        <button class="btn btn-info" onclick="refreshSessions()">🔄 Tải lại</button>
+                        <button class="btn btn-warning" onclick="migrateToFirebase()" title="Migration dữ liệu từ localStorage lên Firebase">🔥 Migrate to Firebase</button>
+                    </div>
+                </div>
+                
+                <div class="sessions-grid" id="sessionsGrid">
+                    <!-- Sessions will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Upload Section -->
+            <section class="upload-section">
+                <div class="section-header">
+                    <h2>📊 Upload Kết Quả Thi</h2>
+                    <div class="upload-controls">
+                        <select id="targetSession" class="session-select">
+                            <option value="">Chọn đợt thi để upload</option>
+                        </select>
+                        <div class="status-badge" id="statusBadge">Chưa có dữ liệu</div>
+                    </div>
+                </div>
+                
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📁</div>
+                    <h3>Kéo thả file Excel vào đây</h3>
+                    <p>hoặc click để chọn file (.xlsx, .xls)</p>
+                    <input type="file" id="excelFile" accept=".xlsx,.xls" hidden>
+                    <button class="upload-btn" onclick="document.getElementById('excelFile').click()">
+                        Chọn File Excel
+                    </button>
+                </div>
+
+                <div class="file-info" id="fileInfo" style="display: none;">
+                    <h4>📄 Thông tin file:</h4>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="label">Tên file:</span>
+                            <span id="fileName">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Kích thước:</span>
+                            <span id="fileSize">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Số dòng:</span>
+                            <span id="rowCount">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Trạng thái:</span>
+                            <span id="processStatus">Đang xử lý...</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Data Preview Section -->
+            <section class="preview-section" id="previewSection" style="display: none;">
+                <div class="section-header">
+                    <h2>👁️ Xem trước dữ liệu</h2>
+                    <div class="preview-controls">
+                        <button class="btn btn-secondary" onclick="togglePreview()">Thu gọn</button>
+                        <button class="btn btn-primary" onclick="saveToSystem()" id="saveBtn">
+                            💾 Lưu vào hệ thống
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="data-stats" id="dataStats"></div>
+                
+                <div class="table-container">
+                    <table class="data-table" id="dataTable">
+                        <thead id="tableHeader"></thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Current Data Section -->
+            <section class="current-data-section">
+                <div class="section-header">
+                    <h2>💾 Dữ liệu hiện tại</h2>
+                    <div class="data-controls">
+                        <button class="btn btn-info" onclick="loadCurrentData()">🔄 Tải lại</button>
+                        <button class="btn btn-warning" onclick="exportData()">📤 Xuất dữ liệu</button>
+                        <button class="btn btn-danger" onclick="clearData()">🗑️ Xóa dữ liệu</button>
+                    </div>
+                </div>
+                
+                <div class="current-stats" id="currentStats">
+                    <div class="stat-card">
+                        <h3 id="totalRecords">0</h3>
+                        <p>Tổng số bản ghi</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="lastUpdate">Chưa có</h3>
+                        <p>Cập nhật lần cuối</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="avgScore">0</h3>
+                        <p>Điểm trung bình</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Test Lookup Section -->
+            <section class="test-section">
+                <div class="section-header">
+                    <h2>🔍 Test tra cứu</h2>
+                </div>
+                
+                <div class="test-lookup">
+                    <div class="input-group">
+                        <input type="email" id="testEmail" placeholder="Nhập email để test tra cứu...">
+                        <button class="btn btn-primary" onclick="testLookup()">Tra cứu</button>
+                    </div>
+                    <div class="test-result" id="testResult"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <p>Đang xử lý...</p>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Create Session Modal -->
+    <div class="modal-overlay" id="sessionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🎯 Tạo Đợt Thi Mới</h3>
+                <button class="modal-close" onclick="closeSessionModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="sessionForm">
+                    <div class="form-group">
+                        <label for="sessionCode">Mã đợt thi *</label>
+                        <input type="text" id="sessionCode" name="sessionCode" placeholder="vd: tsa-2026-dot-2" required>
+                        <small>Chỉ dùng chữ thường, số và dấu gạch ngang</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="sessionName">Tên đợt thi *</label>
+                        <input type="text" id="sessionName" name="sessionName" placeholder="vd: TSA 2026 - Đợt 2" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="sessionDesc">Mô tả</label>
+                        <textarea id="sessionDesc" name="sessionDesc" placeholder="Mô tả chi tiết về đợt thi này"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="examDate">Ngày thi</label>
+                        <input type="date" id="examDate" name="examDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="examInfo">Thông tin bổ sung</label>
+                        <textarea id="examInfo" name="examInfo" placeholder="Thông tin về lệ phí, hình thức thi, v.v..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="sessionStatus">Trạng thái</label>
+                        <select id="sessionStatus" name="sessionStatus">
+                            <option value="active">🟢 Hoạt động</option>
+                            <option value="inactive">🔴 Tạm dừng</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="setAsDefault"> 
+                            Đặt làm đợt thi mặc định
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeSessionModal()">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="createSession()">Tạo đợt thi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Excel Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- Firebase SDK (compat version) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <!-- Firebase Service -->
+    <script src="firebase-service.js"></script>
+    
+    <!-- Admin Script -->
+    <script src="admin.js"></script>
+</body>
+</html>

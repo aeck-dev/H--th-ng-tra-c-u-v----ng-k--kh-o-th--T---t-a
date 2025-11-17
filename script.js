@@ -1,3 +1,155 @@
+// Load available exam sessions
+function loadExamSessions() {
+    console.log('🔍 loadExamSessions() được gọi');
+    try {
+        const sessions = localStorage.getItem('aeck_exam_sessions');
+        console.log('📦 Raw sessions từ localStorage:', sessions);
+        
+        if (!sessions) {
+            console.log('❌ No sessions found from admin');
+            const examSessionSelect = document.getElementById('examSession');
+            if (examSessionSelect) {
+                examSessionSelect.innerHTML = '<option value="">Chưa có đợt thi nào (Liên hệ admin)</option>';
+            }
+            return;
+        }
+        
+        const sessionsList = JSON.parse(sessions);
+        console.log('Loading exam sessions from admin:', sessionsList);
+        
+        const examSessionSelect = document.getElementById('examSession');
+        if (examSessionSelect) {
+            // Clear existing options
+            examSessionSelect.innerHTML = '<option value="">Chọn đợt thi</option>';
+            
+            let hasValidSessions = false;
+            
+            // Add sessions as options - only if they have data and are active
+            sessionsList.forEach(session => {
+                console.log(`🔎 Checking session: ${session.code}, status: ${session.status}`);
+                // Check if session has data
+                const sessionData = localStorage.getItem(`aeck_exam_results_${session.code}`);
+                console.log(`📊 Session data for ${session.code}:`, sessionData ? 'có dữ liệu' : 'không có dữ liệu');
+                const hasData = sessionData && JSON.parse(sessionData).data.length > 0;
+                
+                // Only show sessions that have data and are active
+                if (hasData && session.status === 'active') {
+                    console.log(`✅ Adding session to select: ${session.code}`);
+                    const option = document.createElement('option');
+                    option.value = session.code;
+                    option.textContent = `${session.name}`;
+                    
+                    // Add data count indicator
+                    const dataCount = JSON.parse(sessionData).data.length;
+                    option.textContent += ` (${dataCount} thí sinh)`;
+                    
+                    // Set as selected if it's the default session
+                    if (session.isDefault) {
+                        option.selected = true;
+                    }
+                    
+                    examSessionSelect.appendChild(option);
+                    hasValidSessions = true;
+                } else {
+                    console.log(`❌ Session ${session.code} bị loại - hasData: ${hasData}, status: ${session.status}`);
+                }
+            });
+            
+            if (!hasValidSessions) {
+                examSessionSelect.innerHTML = '<option value="">Chưa có đợt thi nào có dữ liệu</option>';
+                console.log('No sessions with data found');
+            } else {
+                console.log('Exam sessions loaded successfully:', examSessionSelect.options.length - 1, 'sessions');
+            }
+        } else {
+            console.error('examSession select element not found');
+        }
+    } catch (error) {
+        console.error('Lỗi load sessions:', error);
+        const examSessionSelect = document.getElementById('examSession');
+        if (examSessionSelect) {
+            examSessionSelect.innerHTML = '<option value="">Lỗi tải đợt thi</option>';
+        }
+    }
+}
+
+// Note: getDefaultSessions removed - user page only shows admin-created sessions
+
+// Lookup function from localStorage (admin uploaded data)
+function lookupFromLocalStorage(email, sessionCode = null) {
+    try {
+        // If no session specified, search all sessions
+        if (!sessionCode) {
+            const sessions = localStorage.getItem('aeck_exam_sessions');
+            if (!sessions) {
+                return {
+                    success: false,
+                    message: 'Hệ thống chưa có đợt thi nào. Vui lòng liên hệ admin để cập nhật dữ liệu.'
+                };
+            }
+            
+            const sessionsList = JSON.parse(sessions);
+            
+            for (const session of sessionsList) {
+                const result = lookupFromLocalStorage(email, session.code);
+                if (result.success) {
+                    return result;
+                }
+            }
+            
+            return {
+                success: false,
+                message: 'Không tìm thấy kết quả cho email này trong tất cả các đợt thi. Vui lòng kiểm tra lại email hoặc liên hệ ban tổ chức.'
+            };
+        }
+        
+        const savedData = localStorage.getItem(`aeck_exam_results_${sessionCode}`);
+        
+        if (!savedData) {
+            return {
+                success: false,
+                message: `Chưa có dữ liệu kết quả cho đợt thi này. Vui lòng liên hệ admin để cập nhật dữ liệu.`
+            };
+        }
+
+        const { data, metadata } = JSON.parse(savedData);
+        const result = data.find(row => row.email === email);
+
+        if (result) {
+            // Convert data to match the expected format
+            return {
+                success: true,
+                studentData: {
+                    hoTen: `Thí sinh #${result.id}`, // We don't have name in Excel, use ID
+                    email: result.email,
+                    xepHang: result.rank,
+                    toan: result.math_correct,
+                    docHieu: result.reading_correct,
+                    khoaHoc: result.science_correct,
+                    tongDiem: result.total_correct,
+                    irtScore: result.irt_score.toFixed(2),
+                    theta: result.theta.toFixed(2),
+                    irtMath: result.irt_math.toFixed(2),
+                    irtReading: result.irt_reading.toFixed(2),
+                    irtScience: result.irt_science.toFixed(2),
+                    sessionName: metadata.sessionName || sessionCode
+                }
+            };
+        } else {
+            return {
+                success: false,
+                message: `Không tìm thấy kết quả cho email này trong đợt thi đã chọn. Vui lòng kiểm tra lại email hoặc thử đợt thi khác.`
+            };
+        }
+    } catch (error) {
+        console.error('Lỗi tra cứu từ localStorage:', error);
+        return {
+            success: false,
+            message: 'Có lỗi xảy ra trong hệ thống. Vui lòng thử lại sau hoặc liên hệ admin.'
+        };
+    }
+}
+
 // Navigation functions
 function showMainMenu() {
     document.getElementById('mainMenu').style.display = 'block';
@@ -31,6 +183,9 @@ function showLookupForm() {
     document.getElementById('registrationForm').style.display = 'none';
     document.getElementById('lookupForm').style.display = 'block';
     document.getElementById('lookupResults').style.display = 'none';
+    
+    // Reload exam sessions when showing lookup form
+    loadExamSessions();
 }
 
 function showLookupResults(data) {
@@ -54,11 +209,11 @@ function showLookupResults(data) {
         return;
     }
 
-    const studentData = data.data;
+    const studentData = data.studentData;
     resultsDiv.innerHTML = `
         <div class="test-report">
-            <h1 class="report-title">GIẤY CHỨNG NHẬN KẾT QUẢ THI</h1>
-            <h2 class="report-subtitle">TEST REPORT FORM</h2>
+            <h1 class="report-title">GIẤY CHỨNG NHẬN KẾT QUẢ THI TSA 2026</h1>
+            <h2 class="report-subtitle">TSA 2026 TEST REPORT FORM</h2>
             
             <div class="student-info">
                 <div class="info-row">
@@ -66,39 +221,68 @@ function showLookupResults(data) {
                     <span class="info-value">${studentData.email}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">ID học sinh:</span>
-                    <span class="info-value">${studentData.idHs}</span>
+                    <span class="info-label">Đợt thi:</span>
+                    <span class="info-value">${studentData.sessionName}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Xếp hạng:</span>
+                    <span class="info-value">#${studentData.xepHang}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Điểm IRT tổng:</span>
+                    <span class="info-value">${studentData.irtScore}</span>
                 </div>
             </div>
 
             <div class="scores">
                 <div class="overall-score">
-                    <h3>Điểm bài thi - Overall score</h3>
-                    <div class="score">${studentData.irt || '0'}</div>
+                    <h3>Tổng số câu đúng - Total Correct</h3>
+                    <div class="score">${studentData.tongDiem}</div>
                     <div class="score-range">0-100</div>
                 </div>
 
                 <div class="detail-scores">
                     <div class="score-item">
-                        <div class="score">${studentData.toan || '0'}</div>
+                        <div class="score">${studentData.toan}</div>
                         <div class="score-range">0-40</div>
-                        <div class="score-label">Tư duy Toán học<br>Mathematical thinking skills</div>
+                        <div class="score-label">Toán học<br>Mathematics (IRT: ${studentData.irtMath})</div>
                     </div>
                     <div class="score-item">
-                        <div class="score">${studentData.docHieu || '0'}</div>
+                        <div class="score">${studentData.docHieu}</div>
                         <div class="score-range">0-20</div>
-                        <div class="score-label">Tư duy Đọc hiểu<br>Reading comprehension skills</div>
+                        <div class="score-label">Đọc hiểu<br>Reading (IRT: ${studentData.irtReading})</div>
                     </div>
                     <div class="score-item">
-                        <div class="score">${studentData.khoaHoc || '0'}</div>
+                        <div class="score">${studentData.khoaHoc}</div>
                         <div class="score-range">0-40</div>
-                        <div class="score-label">Tư duy Khoa học/Giải quyết vấn đề<br>Scientific thinking skills/Problem-solving thinking skills</div>
+                        <div class="score-label">Khoa học<br>Science (IRT: ${studentData.irtScience})</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="additional-info">
+                <div class="info-section">
+                    <h4>📊 Thông tin chi tiết</h4>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span>Theta Score:</span>
+                            <span>${studentData.theta}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>IRT Total Score:</span>
+                            <span>${studentData.irtScore}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>Ranking:</span>
+                            <span>#${studentData.xepHang}</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="actions">
                 <button onclick="showLookupForm()" class="btn btn-primary">Tra cứu lại</button>
+                <button onclick="window.print()" class="btn btn-secondary">In kết quả</button>
             </div>
         </div>
     `;
@@ -126,20 +310,9 @@ async function handleLookup(event) {
     }
 
     try {
-        const response = await fetch(GOOGLE_SHEETS_WEBAPP_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                action: 'lookup',
-                email: email,
-                examSession: examSession
-            })
-        });
-
-        const data = await response.json();
-        showLookupResults(data);
+        // Lookup from localStorage (admin uploaded data)
+        const result = lookupFromLocalStorage(email.toLowerCase(), examSession);
+        showLookupResults(result);
     } catch (error) {
         console.error('Error:', error);
         showLookupResults({
@@ -623,7 +796,26 @@ function displayLookupResult(result, email, examSession) {
     }
 })();
 
+// Listen for localStorage changes to update sessions
+window.addEventListener('storage', function(e) {
+    if (e.key === 'aeck_exam_sessions') {
+        console.log('Sessions updated in localStorage, reloading...');
+        loadExamSessions();
+    }
+});
+
+// Also check for changes periodically (for same-window updates)
+setInterval(() => {
+    const currentSessionsString = localStorage.getItem('aeck_exam_sessions');
+    if (window.lastSessionsString !== currentSessionsString) {
+        window.lastSessionsString = currentSessionsString;
+        loadExamSessions();
+    }
+}, 2000);
+
 // Initialize page
 document.addEventListener('DOMContentLoaded', function() {
+    loadExamSessions();
+    window.lastSessionsString = localStorage.getItem('aeck_exam_sessions');
     showMainMenu();
 });

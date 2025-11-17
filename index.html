@@ -217,6 +217,163 @@
             border-radius: 12px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
+
+        /* New Email Input Styles */
+        .email-input {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px;
+        }
+
+        .email-input .form-container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        /* Results Dashboard Styles */
+        .results-dashboard {
+            padding: 20px 0;
+        }
+
+        .user-info {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .change-email-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .change-email-btn:hover {
+            background: #5a6268;
+        }
+
+        /* Exam Result Card Styles - Like image layout */
+        .exam-result-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .exam-result-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin: 0 0 20px 0;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .exam-info-grid {
+            margin-bottom: 20px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f8f8f8;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .info-value {
+            color: #333;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .info-value.highlight {
+            background: #fff5f5;
+            color: #dc3545;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .view-result-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .view-result-btn:hover {
+            background: #c82333;
+        }
+
+        .register-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .register-btn:hover {
+            background: #218838;
+        }
+
+        .register-btn.registered {
+            background: #28a745;
+            cursor: default;
+        }
+
+        .expired-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: not-allowed;
+            flex: 1;
+        }
     </style>
 </head>
 <body>
@@ -225,63 +382,32 @@
             <img src="assets/Bản sao của AECK (1).png" alt="Logo">
         </div>
 
-        <!-- Main Menu -->
-        <div class="main-menu" id="mainMenu">
-            <div class="card-container">
-                <div class="card" onclick="showExamList()">
-                    <div class="card-icon">
-                        <i class="fas fa-file-alt"></i>
-                    </div>
-                    <h2 class="card-title">ĐĂNG KÝ THI</h2>
-                    <p class="card-description">Đăng ký tham gia các đợt thi TSA</p>
+        <!-- Email Input Form -->
+        <div class="email-input" id="emailInput">
+            <div class="form-container">
+                <h2 class="section-title">Nhập email để tra cứu kết quả thi</h2>
+                <div class="form-group">
+                    <label for="userEmail">Email *</label>
+                    <input type="email" id="userEmail" name="userEmail" placeholder="Nhập email của bạn" required>
                 </div>
-
-                <div class="card" onclick="showLookupForm()">
-                    <div class="card-icon">
-                        <i class="fas fa-search"></i>
-                    </div>
-                    <h2 class="card-title">TRA CỨU</h2>
-                    <p class="card-description">Tra cứu thông tin đăng ký</p>
-                </div>
+                <button type="button" class="submit-btn" onclick="submitEmail()">Tiếp tục</button>
             </div>
         </div>
 
-        <!-- Exam List -->
-        <div class="exam-list" id="examList" style="display: none;">
-            <div class="back-button" onclick="showMainMenu()">
-                <i class="fas fa-arrow-left"></i> Quay lại
+        <!-- Results Dashboard -->
+        <div class="results-dashboard" id="resultsDashboard" style="display: none;">
+            <div class="user-info">
+                <p>Email: <strong id="displayEmail"></strong></p>
+                <button class="change-email-btn" onclick="changeEmail()">Đổi email</button>
             </div>
-
-            <h2 class="section-title">Danh sách các kỳ thi</h2>
-
-            <div class="exam-grid">
-                <div class="exam-card">
-                    <div class="exam-header">
-                        <h3>Bài thi TSA 2026 chính thức - Đợt 1</h3>
-                        <span class="status-badge active">Thi trực tuyến</span>
-                    </div>
-                    <div class="exam-info">
-                        <div class="info-row">
-                            <span class="label">Hình thức thi:</span>
-                            <span class="value">Thi trực tuyến</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="label">Thời gian đăng ký:</span>
-                            <span class="value">01/12/2024 - 31/12/2024</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="label">Lệ phí:</span>
-                            <span class="value">Miễn phí</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="label">Thời gian thi:</span>
-                            <span class="value">18/01/2026 - 19/01/2026</span>
-                        </div>
-                    </div>
-                    <button class="register-btn registered" id="registerBtn-tsa-2026-dot-1" disabled>Hết hạn đăng ký</button>
-                </div>
+            
+            <h2 class="section-title">Kết quả các đợt thi</h2>
+            <div class="exam-grid" id="examResultsGrid">
+                <!-- Exam result cards will be loaded here -->
             </div>
         </div>
+
+
 
         <!-- Registration Form -->
         <div class="registration-form" id="registrationForm" style="display: none;">
@@ -346,39 +472,7 @@
             </form>
         </div>
 
-        <!-- Lookup Form -->
-        <div class="lookup-form" id="lookupForm" style="display: none;">
-            <div class="back-button" onclick="showMainMenu()">
-                <i class="fas fa-arrow-left"></i> Quay lại
-            </div>
 
-            <h2 class="section-title">Tra cứu kết quả thi</h2>
-
-            <form class="form-container" onsubmit="handleLookup(event)">
-                <div class="form-group">
-                    <label for="lookupEmail">Email *</label>
-                    <input type="email" id="lookupEmail" name="lookupEmail" required placeholder="Nhập email của bạn">
-                </div>
-
-                <div class="form-group">
-                    <label for="examSession">Đợt thi *</label>
-                    <select id="examSession" name="examSession" required>
-                        <option value="">Chọn đợt thi</option>
-                        <option value="tsa-2026-dot-1">Bài thi TSA 2026 chính thức - Đợt 2</option>
-                    </select>
-                </div>
-
-                <div class="form-actions">
-                    <button type="button" class="btn-cancel" onclick="showMainMenu()">Hủy</button>
-                    <button type="submit" class="btn-submit" id="lookupButton">Tra cứu</button>
-                </div>
-                <!-- Loading Spinner trong form -->
-                <div class="loading-spinner" id="formLoadingSpinner" style="display: none; margin-top: 20px;">
-                    <div class="spinner"></div>
-                    <div class="loading-text">Đang tra cứu thông tin...</div>
-                </div>
-            </form>
-        </div>
 
         <!-- Lookup Results -->
         <div class="lookup-results" id="lookupResults" style="display: none;">
@@ -627,40 +721,22 @@
 
         // Navigation
         function showMainMenu() {
-            document.getElementById('mainMenu').style.display = 'block';
-            document.getElementById('examList').style.display = 'none';
-            document.getElementById('registrationForm').style.display = 'none';
-            document.getElementById('lookupForm').style.display = 'none';
-            document.getElementById('lookupResults').style.display = 'none';
+            showEmailInput();
         }
         function showExamList() {
-            document.getElementById('mainMenu').style.display = 'none';
-            document.getElementById('examList').style.display = 'block';
-            document.getElementById('registrationForm').style.display = 'none';
-            document.getElementById('lookupForm').style.display = 'none';
-            document.getElementById('lookupResults').style.display = 'none';
-            checkRegistrationStatus(); // Check registration status when showing exam list
+            showResultsDashboard();
         }
         function showRegistrationForm(sessionCode = 'tsa-2026-dot-1') {
             CURRENT_SESSION = sessionCode;
-            document.getElementById('mainMenu').style.display = 'none';
-            document.getElementById('examList').style.display = 'none';
+            document.getElementById('emailInput').style.display = 'none';
+            document.getElementById('resultsDashboard').style.display = 'none';
             document.getElementById('registrationForm').style.display = 'block';
-            document.getElementById('lookupForm').style.display = 'none';
-            document.getElementById('lookupResults').style.display = 'none';
-        }
-        function showLookupForm() {
-            document.getElementById('mainMenu').style.display = 'none';
-            document.getElementById('examList').style.display = 'none';
-            document.getElementById('registrationForm').style.display = 'none';
-            document.getElementById('lookupForm').style.display = 'block';
             document.getElementById('lookupResults').style.display = 'none';
         }
         function showLookupResults() {
-            document.getElementById('mainMenu').style.display = 'none';
-            document.getElementById('examList').style.display = 'none';
+            document.getElementById('emailInput').style.display = 'none';
+            document.getElementById('resultsDashboard').style.display = 'none';
             document.getElementById('registrationForm').style.display = 'none';
-            document.getElementById('lookupForm').style.display = 'none';
             document.getElementById('lookupResults').style.display = 'block';
         }
 
@@ -776,7 +852,7 @@
                             </div>
 
                             <div class="actions" style="margin-top: 20px; text-align: center;">
-                                <button onclick="showLookupForm()" style="background: #DC1E2D; color: white; padding: 12px 30px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">Tra cứu lại</button>
+                                <button onclick="showEmailInput()" style="background: #DC1E2D; color: white; padding: 12px 30px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">Tra cứu lại</button>
                             </div>
                         </div>
                     `;
@@ -819,8 +895,492 @@
             }
         }
 
+        function loadExamResults(email) {
+            console.log('🔍 Loading exam results for:', email);
+            
+            const sessions = localStorage.getItem('aeck_exam_sessions');
+            const examResultsGrid = document.getElementById('examResultsGrid');
+            
+            if (!sessions) {
+                examResultsGrid.innerHTML = '<p style="text-align: center; color: #666;">Chưa có đợt thi nào. Vui lòng liên hệ admin.</p>';
+                return;
+            }
+            
+            const sessionsList = JSON.parse(sessions);
+            let hasResults = false;
+            
+            examResultsGrid.innerHTML = '';
+            
+            sessionsList.forEach(session => {
+                if (session.status !== 'active') return; // Chỉ hiển thị đợt thi đang hoạt động
+                
+                const sessionData = localStorage.getItem(`aeck_exam_results_${session.code}`);
+                const hasData = sessionData && JSON.parse(sessionData).data.length > 0;
+                
+                if (!hasData) return; // Chỉ hiển thị đợt thi có dữ liệu
+                
+                const data = JSON.parse(sessionData);
+                const userResult = data.data.find(record => 
+                    record.email && record.email.toLowerCase().trim() === email.toLowerCase().trim()
+                );
+                
+                const hasResult = !!userResult;
+                hasResults = hasResults || hasResult;
+                
+                const card = document.createElement('div');
+                card.className = `exam-result-card ${hasResult ? 'has-result' : 'no-result'}`;
+                
+                // Tạo ngày giả cho ví dụ
+                const examDate = session.examDate ? new Date(session.examDate) : new Date('2025-04-26');
+                const regEndDate = new Date(examDate);
+                regEndDate.setDate(regEndDate.getDate() - 20); // 20 ngày trước ngày thi
+                const regStartDate = new Date(regEndDate);
+                regStartDate.setDate(regStartDate.getDate() - 30); // 30 ngày đăng ký
+                
+                card.innerHTML = `
+                    <h3 class="exam-result-title">${session.name}</h3>
+                    
+                    <div class="exam-info-grid">
+                        <div class="info-row">
+                            <span class="info-label">Hình thức thi:</span>
+                            <span class="info-value highlight">Thi tại điểm thi</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Thời gian đăng ký:</span>
+                            <span class="info-value">${regStartDate.toLocaleDateString('vi-VN')} - ${regEndDate.toLocaleDateString('vi-VN')}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Lệ phí:</span>
+                            <span class="info-value">500.000 đ</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Thời gian thi:</span>
+                            <span class="info-value">${examDate.toLocaleDateString('vi-VN')} - ${new Date(examDate.getTime() + 24*60*60*1000).toLocaleDateString('vi-VN')}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-actions">
+                        ${hasResult ? 
+                            `<button class="view-result-btn" onclick="viewExamResult('${session.code}', '${email}')">Xem kết quả</button>
+                             <button class="register-btn registered">Đã đăng ký</button>` :
+                            `<button class="expired-btn" disabled>Đã hết hạn</button>
+                             <button class="register-btn" onclick="showRegistrationForm('${session.code}')">Xem thêm</button>`
+                        }
+                    </div>
+                `;
+                
+                examResultsGrid.appendChild(card);
+            });
+            
+            if (examResultsGrid.children.length === 0) {
+                examResultsGrid.innerHTML = '<p style="text-align: center; color: #666;">Không có đợt thi nào đang hoạt động.</p>';
+            }
+        }
+        
+        function viewExamResult(sessionCode, email) {
+            console.log('📊 Viewing result for:', email, 'in session:', sessionCode);
+            
+            const sessionData = localStorage.getItem(`aeck_exam_results_${sessionCode}`);
+            if (!sessionData) {
+                alert('Không tìm thấy dữ liệu đợt thi');
+                return;
+            }
+            
+            const data = JSON.parse(sessionData);
+            const userResult = data.data.find(record => 
+                record.email && record.email.toLowerCase().trim() === email.toLowerCase().trim()
+            );
+            
+            if (!userResult) {
+                alert('Không tìm thấy kết quả cho email này');
+                return;
+            }
+            
+            // Hiển thị kết quả (sử dụng modal hiện tại)
+            displayResult(userResult, sessionCode);
+        }
+        
+        function displayResult(result, sessionCode) {
+            console.log('📊 Displaying result:', result);
+            
+            // Lấy điểm từ dữ liệu thực tế
+            const totalScore = parseFloat(result.irt_score) || 0;
+            const mathScore = parseInt(result.math_correct) || 0;
+            const readingScore = parseInt(result.reading_correct) || 0;
+            const scienceScore = parseInt(result.science_correct) || 0;
+            
+            // Lấy điểm IRT từng phần
+            const irtMath = parseFloat(result.irt_math) || 0;
+            const irtReading = parseFloat(result.irt_reading) || 0;
+            const irtScience = parseFloat(result.irt_science) || 0;
+            
+            // Tạo session title từ sessionCode
+            const sessionTitle = sessionCode.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Test 2024';
+            
+            // Tạo modal riêng cho kết quả thi
+            showResultModal(result, sessionCode, totalScore, mathScore, readingScore, scienceScore, sessionTitle, irtMath, irtReading, irtScience);
+        }
+        
+        function showResultModal(result, sessionCode, totalScore, mathScore, readingScore, scienceScore, sessionTitle, irtMath, irtReading, irtScience) {
+            // Tạo modal overlay
+            const modalOverlay = document.createElement('div');
+            modalOverlay.id = 'resultModalOverlay';
+            modalOverlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+            `;
+            
+            modalOverlay.innerHTML = `
+                <div class="result-modal" style="
+                    background: white;
+                    border-radius: 12px;
+                    max-width: 850px;
+                    width: 90%;
+                    max-height: 90vh;
+                    overflow-y: auto;
+                    position: relative;
+                ">
+                    <div class="result-modal-header" style="
+                        padding: 20px;
+                        border-bottom: 1px solid #e0e0e0;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    ">
+                        <h2 style="margin: 0; color: #333; font-size: 20px;">${sessionTitle}</h2>
+                        <button onclick="closeResultModal()" style="
+                            background: none;
+                            border: none;
+                            font-size: 24px;
+                            cursor: pointer;
+                            color: #666;
+                            padding: 0;
+                            width: 30px;
+                            height: 30px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                        ">&times;</button>
+                    </div>
+                    
+                    <div class="result-modal-body" style="padding: 20px;">
+                        <div class="tsa-result-container" style="
+                            display: flex;
+                            gap: 30px;
+                        ">
+                            <div class="result-left-panel" style="
+                                flex: 1;
+                                background: #f8f9fa;
+                                padding: 20px;
+                                border-radius: 8px;
+                            ">
+                                <div class="main-score-section" style="
+                                    text-align: center;
+                                    margin-bottom: 20px;
+                                ">
+                                    <div style="
+                                        font-size: 14px;
+                                        color: #666;
+                                        margin-bottom: 5px;
+                                    ">Điểm TSA</div>
+                                    <div style="
+                                        font-size: 48px;
+                                        font-weight: bold;
+                                        color: #dc3545;
+                                    ">${totalScore}</div>
+                                </div>
+                                
+                                <div class="detailed-scores" style="margin: 20px 0;">
+                                    <div style="
+                                        font-size: 14px;
+                                        color: #666;
+                                        margin-bottom: 10px;
+                                    ">Số câu đúng:</div>
+                                    <div style="
+                                        display: flex;
+                                        justify-content: space-between;
+                                        margin-bottom: 8px;
+                                        font-size: 14px;
+                                    ">
+                                        <span style="color: #333;">Tư duy Toán học:</span>
+                                        <span style="font-weight: bold; color: #333;">${mathScore}</span>
+                                    </div>
+                                    <div style="
+                                        display: flex;
+                                        justify-content: space-between;
+                                        margin-bottom: 8px;
+                                        font-size: 14px;
+                                    ">
+                                        <span style="color: #333;">Tư duy Đọc hiểu:</span>
+                                        <span style="font-weight: bold; color: #333;">${readingScore}</span>
+                                    </div>
+                                    <div style="
+                                        display: flex;
+                                        justify-content: space-between;
+                                        margin-bottom: 8px;
+                                        font-size: 14px;
+                                    ">
+                                        <span style="color: #333;">Tư duy Khoa học/Giải quyết vấn đề:</span>
+                                        <span style="font-weight: bold; color: #333;">${scienceScore}</span>
+                                    </div>
+                                </div>
+                                
+                                <button onclick="viewCertificate()" style="
+                                    width: 100%;
+                                    background: #dc3545;
+                                    color: white;
+                                    border: none;
+                                    padding: 12px;
+                                    border-radius: 6px;
+                                    font-size: 14px;
+                                    font-weight: bold;
+                                    cursor: pointer;
+                                    margin: 20px 0;
+                                ">XEM CHỨNG CHỈ</button>
+                                
+                                <div style="text-align: center;">
+                                    <a href="#" style="
+                                        color: #007bff;
+                                        text-decoration: none;
+                                        font-size: 13px;
+                                    ">Đăng ký nhận chứng chỉ bản giấy đến 8/9/2025</a>
+                                </div>
+                            </div>
+                            
+                            <div class="result-right-panel" style="flex: 1;">
+                                <h3 style="
+                                    color: #333;
+                                    font-size: 16px;
+                                    font-weight: bold;
+                                    margin-bottom: 20px;
+                                ">Thông tin dự thi</h3>
+                                
+                                <div style="margin-bottom: 15px;">
+                                    <span style="
+                                        display: block;
+                                        color: #666;
+                                        font-size: 13px;
+                                        margin-bottom: 3px;
+                                    ">Hội đồng thi:</span>
+                                    <span style="
+                                        display: block;
+                                        color: #333;
+                                        font-size: 14px;
+                                        line-height: 1.4;
+                                    ">Trường ĐH Thuỷ Lợi (Nhà C5)</span>
+                                </div>
+                                
+                                <div style="margin-bottom: 15px;">
+                                    <span style="
+                                        display: block;
+                                        color: #666;
+                                        font-size: 13px;
+                                        margin-bottom: 3px;
+                                    ">Thời gian làm thủ tục:</span>
+                                    <span style="
+                                        display: block;
+                                        color: #333;
+                                        font-size: 14px;
+                                        line-height: 1.4;
+                                    ">07:00 27/04/2025</span>
+                                </div>
+                                
+                                <div style="margin-bottom: 15px;">
+                                    <span style="
+                                        display: block;
+                                        color: #666;
+                                        font-size: 13px;
+                                        margin-bottom: 3px;
+                                    ">Thời gian vào phòng thi:</span>
+                                    <span style="
+                                        display: block;
+                                        color: #333;
+                                        font-size: 14px;
+                                        line-height: 1.4;
+                                    ">07:45 27/04/2025</span>
+                                </div>
+                                
+                                <div style="margin-bottom: 15px;">
+                                    <span style="
+                                        display: block;
+                                        color: #666;
+                                        font-size: 13px;
+                                        margin-bottom: 3px;
+                                    ">Thời gian bắt đầu thi:</span>
+                                    <span style="
+                                        display: block;
+                                        color: #333;
+                                        font-size: 14px;
+                                        line-height: 1.4;
+                                    ">08:30 27/04/2025</span>
+                                </div>
+                                
+                                <div style="margin-bottom: 15px;">
+                                    <span style="
+                                        display: block;
+                                        color: #666;
+                                        font-size: 13px;
+                                        margin-bottom: 3px;
+                                    ">Phòng thi:</span>
+                                    <span style="
+                                        display: block;
+                                        color: #333;
+                                        font-size: 14px;
+                                        line-height: 1.4;
+                                    ">Phòng C5-102, Tòa nhà C5 - Trường Đại học Thuỷ lợi (Số 175 phố Tây Sơn, Trung Liệt, Đống Đa, Hà Nội)</span>
+                                </div>
+                                
+                                <div style="margin-bottom: 15px;">
+                                    <span style="
+                                        display: block;
+                                        color: #666;
+                                        font-size: 13px;
+                                        margin-bottom: 3px;
+                                    ">Số báo danh:</span>
+                                    <span style="
+                                        display: block;
+                                        color: #333;
+                                        font-size: 14px;
+                                        line-height: 1.4;
+                                    ">${result.id || 'N/A'}</span>
+                                </div>
+                                
+                                <div style="margin-bottom: 15px;">
+                                    <span style="
+                                        display: block;
+                                        color: #666;
+                                        font-size: 13px;
+                                        margin-bottom: 3px;
+                                    ">Giấy báo dự thi:</span>
+                                    <a href="#" style="
+                                        color: #007bff;
+                                        text-decoration: none;
+                                        font-size: 14px;
+                                    ">Xem tại đây</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="
+                            text-align: center;
+                            margin-top: 30px;
+                            padding-top: 20px;
+                            border-top: 1px solid #e0e0e0;
+                        ">
+                            <button onclick="closeResultModal()" style="
+                                background: #6c757d;
+                                color: white;
+                                border: none;
+                                padding: 12px 30px;
+                                border-radius: 8px;
+                                font-size: 16px;
+                                cursor: pointer;
+                            ">Đóng</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Responsive CSS cho mobile
+            const mediaQuery = window.matchMedia('(max-width: 768px)');
+            if (mediaQuery.matches) {
+                const container = modalOverlay.querySelector('.tsa-result-container');
+                container.style.flexDirection = 'column';
+                container.style.gap = '20px';
+                
+                const modal = modalOverlay.querySelector('.result-modal');
+                modal.style.width = '95%';
+                modal.style.margin = '20px';
+            }
+            
+            document.body.appendChild(modalOverlay);
+            
+            // Close modal khi click outside
+            modalOverlay.addEventListener('click', function(e) {
+                if (e.target === modalOverlay) {
+                    closeResultModal();
+                }
+            });
+        }
+        
+        function closeResultModal() {
+            const modal = document.getElementById('resultModalOverlay');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        function viewCertificate() {
+            alert('Chức năng xem chứng chỉ sẽ được cập nhật sau!');
+        }
+
+        // Email and Navigation Functions
+        let currentUserEmail = '';
+
+        function showEmailInput() {
+            document.getElementById('emailInput').style.display = 'block';
+            document.getElementById('resultsDashboard').style.display = 'none';
+            document.getElementById('registrationForm').style.display = 'none';
+            document.getElementById('lookupResults').style.display = 'none';
+        }
+        
+        function showResultsDashboard() {
+            document.getElementById('emailInput').style.display = 'none';
+            document.getElementById('resultsDashboard').style.display = 'block';
+            document.getElementById('registrationForm').style.display = 'none';
+            document.getElementById('lookupResults').style.display = 'none';
+        }
+
+        function submitEmail() {
+            const emailInput = document.getElementById('userEmail');
+            const email = emailInput.value.trim();
+            
+            console.log('🔍 Submit email:', email);
+            
+            if (!email) {
+                alert('Vui lòng nhập email');
+                return;
+            }
+            
+            if (!isValidEmail(email)) {
+                alert('Email không hợp lệ');
+                return;
+            }
+            
+            currentUserEmail = email;
+            document.getElementById('displayEmail').textContent = email;
+            
+            loadExamResults(email);
+            showResultsDashboard();
+        }
+        
+        function changeEmail() {
+            document.getElementById('userEmail').value = '';
+            currentUserEmail = '';
+            showEmailInput();
+        }
+        
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
         // Init
-        showMainMenu();
+        showEmailInput();
+        
+        // Load exam sessions when page loads
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Page loaded...');
+            showEmailInput();
+        });
     </script>
 </body>
 </html>

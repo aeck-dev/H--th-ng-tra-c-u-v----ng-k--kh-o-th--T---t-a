@@ -1,0 +1,54 @@
+{
+  "data": [
+    {
+      "rank": 1,
+      "id": "TSA001",
+      "email": "student1@gmail.com",
+      "math_correct": 35,
+      "reading_correct": 18,
+      "science_correct": 38,
+      "total_correct": 91,
+      "theta": 2.145,
+      "irt_math": 85.67,
+      "irt_reading": 82.34,
+      "irt_science": 89.12,
+      "irt_score": 85.71,
+      "uploadDate": "2025-11-17T10:00:00.000Z"
+    },
+    {
+      "rank": 2,
+      "id": "TSA002", 
+      "email": "student2@gmail.com",
+      "math_correct": 32,
+      "reading_correct": 17,
+      "science_correct": 35,
+      "total_correct": 84,
+      "theta": 1.892,
+      "irt_math": 79.45,
+      "irt_reading": 78.90,
+      "irt_science": 83.21,
+      "irt_score": 80.52,
+      "uploadDate": "2025-11-17T10:00:00.000Z"
+    },
+    {
+      "rank": 3,
+      "id": "TSA003",
+      "email": "test@aeck.edu.vn",
+      "math_correct": 30,
+      "reading_correct": 16,
+      "science_correct": 33,
+      "total_correct": 79,
+      "theta": 1.654,
+      "irt_math": 75.23,
+      "irt_reading": 74.56,
+      "irt_science": 78.89,
+      "irt_score": 76.23,
+      "uploadDate": "2025-11-17T10:00:00.000Z"
+    }
+  ],
+  "metadata": {
+    "totalRecords": 3,
+    "lastUpdate": "2025-11-17T10:00:00.000Z",
+    "version": "1.0"
+  }
+}
