@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hệ thống thông tin khảo thí AECK</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -152,6 +155,115 @@
             box-shadow: 0 5px 15px rgba(192, 0, 0, 0.4);
         }
 
+        /* Result modal score card */
+        .result-left-panel {
+            flex: 0 0 420px;
+        }
+
+        .tsa-score-card {
+            background: #fef5f6;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #f9e9ec;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            height: 150px;
+        }
+
+        .tsa-score-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .tsa-score-main {
+            flex: 1;
+        }
+
+        .tsa-score-label {
+            font-size: 15px;
+            color: #111;
+            margin: 0;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .tsa-score-value {
+            font-size: 52px;
+            font-weight: 700;
+            margin: 10px 0 0;
+            color: #c3181f;
+            line-height: 1;
+            text-align: center;
+        }
+
+        .tsa-score-breakdown {
+            min-width: 160px;
+        }
+
+        .tsa-score-meta-label {
+            font-size: 12px;
+            color: #111;
+            margin: 0 0 8px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .tsa-score-row {
+            display: flex;
+            justify-content: flex-start;
+            font-size: 12px;
+            color: #111;
+            margin-top: 6px;
+        }
+
+        .tsa-score-row span:first-child {
+            color: #444;
+        }
+
+        .tsa-score-row span:last-child {
+            font-weight: 600;
+            margin-left: 6px;
+        }
+
+        .tsa-score-button {
+            display: none;
+            width: 100%;
+            background: #c3181f;
+            color: #fff;
+            border: none;
+            padding: 12px;
+            border-radius: 999px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .tsa-score-button:hover {
+            box-shadow: 0 8px 18px rgba(195, 24, 31, 0.25);
+        }
+
+        .tsa-score-note {
+            display: none;
+            font-size: 13px;
+            color: #0d6efd;
+            text-align: center;
+            margin: -8px 0 0;
+        }
+
+        .tsa-score-note span {
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .result-left-panel {
+                flex: 1 1 auto;
+            }
+        }
+
         /* Score Display Styling */
         .score-display {
             display: flex;
@@ -223,21 +335,276 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 400px;
+            min-height: 450px;
+            padding: 20px;
         }
 
         .email-input .form-container {
             background: white;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            max-width: 500px;
+            padding: 50px 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            max-width: 550px;
             width: 100%;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .email-input .section-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .email-input .section-subtitle {
+            font-size: 15px;
+            color: #666;
+            margin-bottom: 35px;
+            text-align: center;
+            font-weight: 400;
+        }
+
+        .email-input .form-group {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .email-input .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #333;
+            font-size: 15px;
+        }
+
+        .email-input .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .email-input .input-icon {
+            position: absolute;
+            left: 18px;
+            color: rgb(192, 0, 0);
+            font-size: 18px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .email-input .form-group input {
+            width: 100%;
+            padding: 16px 20px 16px 50px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+            background: #f9fafb;
+        }
+
+        .email-input .form-group input:focus {
+            outline: none;
+            border-color: rgb(192, 0, 0);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(192, 0, 0, 0.1);
+        }
+
+        .email-input .form-group input::placeholder {
+            color: #9ca3af;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 16px 30px;
+            background: linear-gradient(135deg, rgb(192, 0, 0), rgb(160, 0, 0));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(192, 0, 0, 0.3);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(192, 0, 0, 0.4);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        /* User Info Bar */
+        .user-info {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .user-info p {
+            margin: 0;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .user-info strong {
+            color: rgb(192, 0, 0);
+            font-weight: 700;
+        }
+
+        .change-email-btn {
+            background: #f8f9fa;
+            color: rgb(192, 0, 0);
+            border: 2px solid rgb(192, 0, 0);
+            padding: 10px 25px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .change-email-btn:hover {
+            background: rgb(192, 0, 0);
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(192, 0, 0, 0.3);
+        }
+
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            .email-input {
+                min-height: 350px;
+                padding: 15px;
+            }
+
+            .email-input .form-container {
+                padding: 35px 25px;
+                border-radius: 16px;
+            }
+
+            .email-input .section-title {
+                font-size: 24px;
+            }
+
+            .email-input .section-subtitle {
+                font-size: 14px;
+                margin-bottom: 25px;
+            }
+
+            .email-input .form-group input {
+                padding: 14px 18px 14px 48px;
+                font-size: 16px;
+            }
+
+            .submit-btn {
+                padding: 14px 25px;
+                font-size: 16px;
+            }
+
+            .user-info {
+                padding: 18px 20px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .user-info p {
+                font-size: 15px;
+            }
+
+            .change-email-btn {
+                width: 100%;
+                padding: 12px 20px;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .email-input .form-container {
+                padding: 30px 20px;
+            }
+
+            .email-input .section-title {
+                font-size: 22px;
+            }
+
+            .email-input .input-icon {
+                left: 15px;
+                font-size: 16px;
+            }
+
+            .email-input .form-group input {
+                padding: 13px 15px 13px 45px;
+                font-size: 15px;
+                border-radius: 10px;
+            }
+
+            .submit-btn {
+                padding: 13px 20px;
+                font-size: 15px;
+                border-radius: 10px;
+            }
+
+            .exam-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .exam-result-card {
+                padding: 18px 20px;
+            }
+
+            .card-actions {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .card-action-buttons {
+                width: 100%;
+            }
+
+            .card-action-buttons button {
+                width: 100%;
+            }
         }
 
         /* Results Dashboard Styles */
         .results-dashboard {
             padding: 20px 0;
+        }
+
+        .exam-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(550px, 1fr));
+            gap: 25px;
+            max-width: 1400px;
+            margin: 0 auto;
         }
 
         .user-info {
@@ -268,10 +635,11 @@
         .exam-result-card {
             background: white;
             border-radius: 12px;
-            padding: 20px;
+            padding: 25px 30px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             margin-bottom: 20px;
             border: 1px solid #e0e0e0;
+            min-height: 280px;
         }
 
         .exam-result-title {
@@ -289,10 +657,10 @@
 
         .info-row {
             display: flex;
-            justify-content: space-between;
             align-items: center;
             padding: 8px 0;
             border-bottom: 1px solid #f8f8f8;
+            gap: 15px;
         }
 
         .info-row:last-child {
@@ -302,56 +670,87 @@
         .info-label {
             color: #666;
             font-size: 14px;
+            flex: 1;
         }
 
         .info-value {
             color: #333;
             font-size: 14px;
             font-weight: 500;
+            flex-shrink: 0;
+            text-align: right;
         }
 
         .info-value.highlight {
-            background: #fff5f5;
+            background: #d4edda;
+            color: #28a745;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .info-value.badge-free {
+            background: #d4edda;
+            color: #28a745;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .info-value.badge-premium {
+            background: #f8d7da;
             color: #dc3545;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-block;
         }
 
         .card-actions {
             display: flex;
-            gap: 10px;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
             margin-top: 20px;
         }
 
-        .view-result-btn {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
+        .view-result-link {
+            color: #dc3545;
             font-size: 14px;
             font-weight: 500;
-            transition: all 0.3s ease;
-            flex: 1;
+            text-decoration: none;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            flex-shrink: 0;
         }
 
-        .view-result-btn:hover {
-            background: #c82333;
+        .view-result-link:hover {
+            color: #a71d2a;
+            text-decoration: underline;
+        }
+
+        .card-action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
         }
 
         .register-btn {
             background: #28a745;
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 10px 24px;
             border-radius: 6px;
             cursor: pointer;
             font-size: 14px;
             font-weight: 500;
             transition: all 0.3s ease;
-            flex: 1;
+            white-space: nowrap;
         }
 
         .register-btn:hover {
@@ -367,12 +766,12 @@
             background: #6c757d;
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 10px 24px;
             border-radius: 6px;
             font-size: 14px;
             font-weight: 500;
             cursor: not-allowed;
-            flex: 1;
+            white-space: nowrap;
         }
     </style>
 </head>
@@ -385,12 +784,18 @@
         <!-- Email Input Form -->
         <div class="email-input" id="emailInput">
             <div class="form-container">
-                <h2 class="section-title">Nhập email để tra cứu kết quả thi</h2>
+                <h2 class="section-title">Tra cứu kết quả thi</h2>
+                <p class="section-subtitle">Vui lòng nhập địa chỉ email đã đăng ký để xem kết quả</p>
                 <div class="form-group">
-                    <label for="userEmail">Email *</label>
-                    <input type="email" id="userEmail" name="userEmail" placeholder="Nhập email của bạn" required>
+                    <label for="userEmail">Địa chỉ Email *</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" id="userEmail" name="userEmail" placeholder="example@email.com" required autocomplete="email">
+                    </div>
                 </div>
-                <button type="button" class="submit-btn" onclick="submitEmail()">Tiếp tục</button>
+                <button type="button" class="submit-btn" onclick="submitEmail()">
+                    <i class="fas fa-search" style="margin-right: 8px;"></i>Tra cứu ngay
+                </button>
             </div>
         </div>
 
@@ -930,12 +1335,36 @@
                 const card = document.createElement('div');
                 card.className = `exam-result-card ${hasResult ? 'has-result' : 'no-result'}`;
                 
-                // Tạo ngày giả cho ví dụ
-                const examDate = session.examDate ? new Date(session.examDate) : new Date('2025-04-26');
+                // Lấy ngày thi từ session
+                let examDate, examDateDisplay;
+                if (session.examDate) {
+                    try {
+                        examDate = new Date(session.examDate);
+                        examDateDisplay = examDate.toLocaleDateString('vi-VN', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        });
+                    } catch (e) {
+                        console.warn('Invalid examDate:', session.examDate);
+                        examDate = new Date('2025-04-26');
+                        examDateDisplay = 'Chưa cập nhật';
+                    }
+                } else {
+                    examDate = new Date('2025-04-26'); // Ngày mặc định
+                    examDateDisplay = 'Chưa cập nhật';
+                }
+                
                 const regEndDate = new Date(examDate);
                 regEndDate.setDate(regEndDate.getDate() - 20); // 20 ngày trước ngày thi
                 const regStartDate = new Date(regEndDate);
                 regStartDate.setDate(regStartDate.getDate() - 30); // 30 ngày đăng ký
+                
+                // Lấy thông tin hình thức đăng ký
+                const registrationType = session.registrationType || 'free';
+                const registrationTypeDisplay = registrationType === 'premium' ? 'Premium' : 'Miễn phí';
+                const registrationTypeBadge = registrationType === 'premium' ? 'badge-premium' : 'badge-free';
                 
                 card.innerHTML = `
                     <h3 class="exam-result-title">${session.name}</h3>
@@ -943,28 +1372,32 @@
                     <div class="exam-info-grid">
                         <div class="info-row">
                             <span class="info-label">Hình thức thi:</span>
-                            <span class="info-value highlight">Thi tại điểm thi</span>
+                            <span class="info-value highlight">Online</span>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">Thời gian đăng ký:</span>
-                            <span class="info-value">${regStartDate.toLocaleDateString('vi-VN')} - ${regEndDate.toLocaleDateString('vi-VN')}</span>
+                            <span class="info-label">Ngày thi:</span>
+                            <span class="info-value" style="font-weight: 700; color: rgb(192, 0, 0);">${examDateDisplay}</span>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">Lệ phí:</span>
-                            <span class="info-value">500.000 đ</span>
+                            <span class="info-label">Hình thức chấm điểm:</span>
+                            <span class="info-value">IRT</span>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">Thời gian thi:</span>
-                            <span class="info-value">${examDate.toLocaleDateString('vi-VN')} - ${new Date(examDate.getTime() + 24*60*60*1000).toLocaleDateString('vi-VN')}</span>
+                            <span class="info-label">Hình thức đăng ký:</span>
+                            <span class="info-value ${registrationTypeBadge}">${registrationTypeDisplay}</span>
                         </div>
                     </div>
                     
                     <div class="card-actions">
                         ${hasResult ? 
-                            `<button class="view-result-btn" onclick="viewExamResult('${session.code}', '${email}')">Xem kết quả</button>
-                             <button class="register-btn registered">Đã đăng ký</button>` :
-                            `<button class="expired-btn" disabled>Đã hết hạn</button>
-                             <button class="register-btn" onclick="showRegistrationForm('${session.code}')">Xem thêm</button>`
+                            `<a class="view-result-link" onclick="viewExamResult('${session.code}', '${email}')">Xem kết quả</a>
+                             <div class="card-action-buttons">
+                                <button class="register-btn registered">Đã đăng ký</button>
+                             </div>` :
+                            `<span></span>
+                             <div class="card-action-buttons">
+                                <button class="expired-btn" disabled>Hết hạn đăng ký</button>
+                             </div>`
                         }
                     </div>
                 `;
@@ -986,6 +1419,11 @@
                 return;
             }
             
+            // Lấy thông tin session
+            const sessionsStr = localStorage.getItem('aeck_exam_sessions');
+            const sessions = sessionsStr ? JSON.parse(sessionsStr) : [];
+            const session = sessions.find(s => s.code === sessionCode);
+            
             const data = JSON.parse(sessionData);
             const userResult = data.data.find(record => 
                 record.email && record.email.toLowerCase().trim() === email.toLowerCase().trim()
@@ -997,10 +1435,10 @@
             }
             
             // Hiển thị kết quả (sử dụng modal hiện tại)
-            displayResult(userResult, sessionCode);
+            displayResult(userResult, sessionCode, session);
         }
         
-        function displayResult(result, sessionCode) {
+        function displayResult(result, sessionCode, session) {
             console.log('📊 Displaying result:', result);
             
             // Lấy điểm từ dữ liệu thực tế
@@ -1014,14 +1452,38 @@
             const irtReading = parseFloat(result.irt_reading) || 0;
             const irtScience = parseFloat(result.irt_science) || 0;
             
+            // Lấy ngày thi từ session
+            let examDate = 'Chưa cập nhật';
+            if (session && session.examDate) {
+                try {
+                    examDate = new Date(session.examDate).toLocaleDateString('vi-VN');
+                } catch (e) {
+                    console.warn('Invalid exam date:', session.examDate);
+                    examDate = session.examDate; // Hiển thị nguyên bản nếu không parse được
+                }
+            }
+            
             // Tạo session title từ sessionCode
             const sessionTitle = sessionCode.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Test 2024';
             
             // Tạo modal riêng cho kết quả thi
-            showResultModal(result, sessionCode, totalScore, mathScore, readingScore, scienceScore, sessionTitle, irtMath, irtReading, irtScience);
+            showResultModal(result, sessionCode, totalScore, mathScore, readingScore, scienceScore, sessionTitle, irtMath, irtReading, irtScience, examDate);
         }
         
-        function showResultModal(result, sessionCode, totalScore, mathScore, readingScore, scienceScore, sessionTitle, irtMath, irtReading, irtScience) {
+        function showResultModal(result, sessionCode, totalScore, mathScore, readingScore, scienceScore, sessionTitle, irtMath, irtReading, irtScience, examDate) {
+            const formattedTotalScore = Number.isFinite(totalScore) ? totalScore.toFixed(2) : '0.00';
+            const scoreBreakdown = [
+                { label: 'Tư duy Toán học', value: mathScore },
+                { label: 'Tư duy Đọc hiểu', value: readingScore },
+                { label: 'Tư duy Khoa học/Giải quyết vấn đề', value: scienceScore }
+            ];
+            const scoreBreakdownHtml = scoreBreakdown.map(item => `
+                <div class="tsa-score-row">
+                    <span>${item.label}:</span>
+                    <span>${item.value}</span>
+                </div>
+            `).join('');
+            const certificateNote = 'Đăng ký nhận chứng chỉ bản giấy đến <span>8/9/2025</span>';
             // Tạo modal overlay
             const modalOverlay = document.createElement('div');
             modalOverlay.id = 'resultModalOverlay';
@@ -1059,7 +1521,7 @@
                         <button onclick="closeResultModal()" style="
                             background: none;
                             border: none;
-                            font-size: 24px;
+                            font-size: 28px;
                             cursor: pointer;
                             color: #666;
                             padding: 0;
@@ -1068,6 +1530,7 @@
                             display: flex;
                             align-items: center;
                             justify-content: center;
+                            line-height: 1;
                         ">&times;</button>
                     </div>
                     
@@ -1075,83 +1538,22 @@
                         <div class="tsa-result-container" style="
                             display: flex;
                             gap: 30px;
+                            align-items: stretch;
                         ">
-                            <div class="result-left-panel" style="
-                                flex: 1;
-                                background: #f8f9fa;
-                                padding: 20px;
-                                border-radius: 8px;
-                            ">
-                                <div class="main-score-section" style="
-                                    text-align: center;
-                                    margin-bottom: 20px;
-                                ">
-                                    <div style="
-                                        font-size: 14px;
-                                        color: #666;
-                                        margin-bottom: 5px;
-                                    ">Điểm TSA</div>
-                                    <div style="
-                                        font-size: 48px;
-                                        font-weight: bold;
-                                        color: #dc3545;
-                                    ">${totalScore}</div>
-                                </div>
-                                
-                                <div class="detailed-scores" style="margin: 20px 0;">
-                                    <div style="
-                                        font-size: 14px;
-                                        color: #666;
-                                        margin-bottom: 10px;
-                                    ">Số câu đúng:</div>
-                                    <div style="
-                                        display: flex;
-                                        justify-content: space-between;
-                                        margin-bottom: 8px;
-                                        font-size: 14px;
-                                    ">
-                                        <span style="color: #333;">Tư duy Toán học:</span>
-                                        <span style="font-weight: bold; color: #333;">${mathScore}</span>
+                            <div class="result-left-panel">
+                                <div class="tsa-score-card">
+                                    <div class="tsa-score-header">
+                                        <div class="tsa-score-main">
+                                            <p class="tsa-score-label">Điểm TSA</p>
+                                            <p class="tsa-score-value">${formattedTotalScore}</p>
+                                        </div>
+                                        <div class="tsa-score-breakdown">
+                                            <p class="tsa-score-meta-label">Số câu đúng</p>
+                                            ${scoreBreakdownHtml}
+                                        </div>
                                     </div>
-                                    <div style="
-                                        display: flex;
-                                        justify-content: space-between;
-                                        margin-bottom: 8px;
-                                        font-size: 14px;
-                                    ">
-                                        <span style="color: #333;">Tư duy Đọc hiểu:</span>
-                                        <span style="font-weight: bold; color: #333;">${readingScore}</span>
-                                    </div>
-                                    <div style="
-                                        display: flex;
-                                        justify-content: space-between;
-                                        margin-bottom: 8px;
-                                        font-size: 14px;
-                                    ">
-                                        <span style="color: #333;">Tư duy Khoa học/Giải quyết vấn đề:</span>
-                                        <span style="font-weight: bold; color: #333;">${scienceScore}</span>
-                                    </div>
-                                </div>
-                                
-                                <button onclick="viewCertificate()" style="
-                                    width: 100%;
-                                    background: #dc3545;
-                                    color: white;
-                                    border: none;
-                                    padding: 12px;
-                                    border-radius: 6px;
-                                    font-size: 14px;
-                                    font-weight: bold;
-                                    cursor: pointer;
-                                    margin: 20px 0;
-                                ">XEM CHỨNG CHỈ</button>
-                                
-                                <div style="text-align: center;">
-                                    <a href="#" style="
-                                        color: #007bff;
-                                        text-decoration: none;
-                                        font-size: 13px;
-                                    ">Đăng ký nhận chứng chỉ bản giấy đến 8/9/2025</a>
+                                    <button class="tsa-score-button" onclick="viewCertificate()">XEM CHỨNG CHỈ</button>
+                                    <p class="tsa-score-note">${certificateNote}</p>
                                 </div>
                             </div>
                             
@@ -1160,130 +1562,73 @@
                                     color: #333;
                                     font-size: 16px;
                                     font-weight: bold;
-                                    margin-bottom: 20px;
+                                    margin-bottom: 8px;
                                 ">Thông tin dự thi</h3>
                                 
-                                <div style="margin-bottom: 15px;">
+                                <div style="margin-bottom: 4px;">
                                     <span style="
-                                        display: block;
+                                        display: inline;
                                         color: #666;
                                         font-size: 13px;
-                                        margin-bottom: 3px;
+                                        margin-right: 8px;
                                     ">Hội đồng thi:</span>
                                     <span style="
-                                        display: block;
+                                        display: inline;
                                         color: #333;
                                         font-size: 14px;
                                         line-height: 1.4;
-                                    ">Trường ĐH Thuỷ Lợi (Nhà C5)</span>
+                                    ">Hệ thống Khảo thí AECK</span>
                                 </div>
                                 
-                                <div style="margin-bottom: 15px;">
+                                <div style="margin-bottom: 4px;">
                                     <span style="
-                                        display: block;
+                                        display: inline;
                                         color: #666;
                                         font-size: 13px;
-                                        margin-bottom: 3px;
-                                    ">Thời gian làm thủ tục:</span>
+                                        margin-right: 8px;
+                                    ">Ngày thi:</span>
                                     <span style="
-                                        display: block;
+                                        display: inline;
                                         color: #333;
                                         font-size: 14px;
                                         line-height: 1.4;
-                                    ">07:00 27/04/2025</span>
+                                    ">${examDate}</span>
                                 </div>
                                 
-                                <div style="margin-bottom: 15px;">
+                                <div style="margin-bottom: 4px;">
                                     <span style="
-                                        display: block;
+                                        display: inline;
                                         color: #666;
                                         font-size: 13px;
-                                        margin-bottom: 3px;
-                                    ">Thời gian vào phòng thi:</span>
+                                        margin-right: 8px;
+                                    ">Hình thức thi:</span>
                                     <span style="
-                                        display: block;
-                                        color: #333;
-                                        font-size: 14px;
+                                        display: inline-block;
+                                        background: #d4edda;
+                                        color: #28a745;
+                                        padding: 4px 10px;
+                                        border-radius: 6px;
+                                        font-size: 13px;
+                                        font-weight: 600;
                                         line-height: 1.4;
-                                    ">07:45 27/04/2025</span>
+                                    ">Online</span>
                                 </div>
                                 
-                                <div style="margin-bottom: 15px;">
+                                <div style="margin-bottom: 4px;">
                                     <span style="
-                                        display: block;
+                                        display: inline;
                                         color: #666;
                                         font-size: 13px;
-                                        margin-bottom: 3px;
-                                    ">Thời gian bắt đầu thi:</span>
-                                    <span style="
-                                        display: block;
-                                        color: #333;
-                                        font-size: 14px;
-                                        line-height: 1.4;
-                                    ">08:30 27/04/2025</span>
-                                </div>
-                                
-                                <div style="margin-bottom: 15px;">
-                                    <span style="
-                                        display: block;
-                                        color: #666;
-                                        font-size: 13px;
-                                        margin-bottom: 3px;
-                                    ">Phòng thi:</span>
-                                    <span style="
-                                        display: block;
-                                        color: #333;
-                                        font-size: 14px;
-                                        line-height: 1.4;
-                                    ">Phòng C5-102, Tòa nhà C5 - Trường Đại học Thuỷ lợi (Số 175 phố Tây Sơn, Trung Liệt, Đống Đa, Hà Nội)</span>
-                                </div>
-                                
-                                <div style="margin-bottom: 15px;">
-                                    <span style="
-                                        display: block;
-                                        color: #666;
-                                        font-size: 13px;
-                                        margin-bottom: 3px;
+                                        margin-right: 8px;
                                     ">Số báo danh:</span>
                                     <span style="
-                                        display: block;
+                                        display: inline;
                                         color: #333;
                                         font-size: 14px;
                                         line-height: 1.4;
                                     ">${result.id || 'N/A'}</span>
                                 </div>
-                                
-                                <div style="margin-bottom: 15px;">
-                                    <span style="
-                                        display: block;
-                                        color: #666;
-                                        font-size: 13px;
-                                        margin-bottom: 3px;
-                                    ">Giấy báo dự thi:</span>
-                                    <a href="#" style="
-                                        color: #007bff;
-                                        text-decoration: none;
-                                        font-size: 14px;
-                                    ">Xem tại đây</a>
-                                </div>
                             </div>
-                        </div>
-                        
-                        <div style="
-                            text-align: center;
-                            margin-top: 30px;
-                            padding-top: 20px;
-                            border-top: 1px solid #e0e0e0;
-                        ">
-                            <button onclick="closeResultModal()" style="
-                                background: #6c757d;
-                                color: white;
-                                border: none;
-                                padding: 12px 30px;
-                                border-radius: 8px;
-                                font-size: 16px;
-                                cursor: pointer;
-                            ">Đóng</button>
                         </div>
                     </div>
                 </div>

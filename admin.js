@@ -11,6 +11,41 @@ class AECKAdmin {
         this.loadCurrentData();
     }
 
+    // Format date to dd/mm/yyyy
+    formatDate(dateValue) {
+        if (!dateValue) return '';
+        
+        let date;
+        
+        // Check if it's already a string in dd/mm/yyyy format
+        if (typeof dateValue === 'string' && dateValue.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+            return dateValue;
+        }
+        
+        // Check if it's an Excel serial number
+        if (typeof dateValue === 'number') {
+            // Excel date serial number (days since 1900-01-01)
+            date = new Date((dateValue - 25569) * 86400 * 1000);
+        } else if (dateValue instanceof Date) {
+            date = dateValue;
+        } else if (typeof dateValue === 'string') {
+            date = new Date(dateValue);
+        } else {
+            return '';
+        }
+        
+        // Check if date is valid
+        if (isNaN(date.getTime())) {
+            return dateValue.toString();
+        }
+        
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        
+        return `${day}/${month}/${year}`;
+    }
+
     async initializeFirebase() {
         if (window.firebaseService) {
             console.log('🔥 Initializing Firebase...');
@@ -186,6 +221,7 @@ class AECKAdmin {
                     irt_reading: row.IRT_reading || 0,
                     irt_science: row.IRT_science || 0,
                     irt_score: row.IRT_score || 0,
+                    examDate: row.examDate ? this.formatDate(row.examDate) : '',
                     uploadDate: new Date().toISOString()
                 });
             }
@@ -690,6 +726,7 @@ class AECKAdmin {
             name: (formData.get('sessionName') || '').trim(),
             description: (formData.get('sessionDesc') || '').trim(),
             examDate: formData.get('examDate') || '',
+            registrationType: formData.get('registrationType') || 'free',
             examInfo: (formData.get('examInfo') || '').trim(),
             status: formData.get('sessionStatus') || 'active',
             isDefault: document.getElementById('setAsDefault').checked,

@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AECK Admin Panel - Quản lý kết quả thi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="admin-style.css">
     <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
 </head>
@@ -198,6 +201,13 @@
                     <div class="form-group">
                         <label for="examDate">Ngày thi</label>
                         <input type="date" id="examDate" name="examDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="registrationType">Hình thức đăng ký *</label>
+                        <select id="registrationType" name="registrationType" required>
+                            <option value="free">Miễn phí</option>
+                            <option value="premium">Premium</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="examInfo">Thông tin bổ sung</label>
