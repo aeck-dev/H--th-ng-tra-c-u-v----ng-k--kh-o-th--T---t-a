@@ -69,6 +69,16 @@ body {
     justify-content: center;
 }
 
+/* Ensure mobile single column for any card containers */
+@media (max-width: 768px) {
+    .card-container {
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        margin: 0 10px;
+    }
+}
+
 .card {
     background: white;
     border-radius: 15px;
@@ -710,12 +720,15 @@ body {
 /* Additional Responsive Design */
 @media (max-width: 768px) {
     .exam-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr !important;
         gap: 15px;
+        margin: 0 10px;
     }
 
     .exam-card {
         padding: 20px;
+        width: 100%;
+        max-width: 100%;
     }
 
     .exam-header {

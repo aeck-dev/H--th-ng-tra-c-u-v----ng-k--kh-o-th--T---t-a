@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migrate to Firebase - AECK</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .step {
+            margin: 20px 0;
+            padding: 20px;
+            border-left: 4px solid #DC1E2D;
+            background: #fafafa;
+        }
+        .success {
+            color: #28a745;
+            background: #d4edda;
+            border-color: #28a745;
+        }
+        .error {
+            color: #dc3545;
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+        .warning {
+            color: #856404;
+            background: #fff3cd;
+            border-color: #ffc107;
+        }
+        .btn {
+            background: #DC1E2D;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .btn:hover {
+            background: #a71d2a;
+        }
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        pre {
+            background: #f1f3f4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Migrate AECK Data to Firebase</h1>
+        <p>Tool này sẽ chuyển tất cả dữ liệu từ localStorage sang Firebase để có thể truy cập từ mọi trình duyệt và thiết bị.</p>
+
+        <div class="step">
+            <h3>📋 Bước 1: Kiểm tra dữ liệu localStorage</h3>
+            <button class="btn" onclick="checkLocalStorage()">Kiểm tra dữ liệu</button>
+            <div id="localStorageResult"></div>
+        </div>
+
+        <div class="step">
+            <h3>🔥 Bước 2: Kết nối Firebase</h3>
+            <button class="btn" onclick="initFirebase()">Khởi tạo Firebase</button>
+            <div id="firebaseResult"></div>
+        </div>
+
+        <div class="step">
+            <h3>📤 Bước 3: Migrate dữ liệu</h3>
+            <button class="btn" id="migrateBtn" onclick="migrateData()" disabled>Chuyển dữ liệu</button>
+            <div id="migrateResult"></div>
+        </div>
+
+        <div class="step">
+            <h3>✅ Bước 4: Xác nhận và kích hoạt</h3>
+            <button class="btn" id="activateBtn" onclick="activateFirebase()" disabled>Kích hoạt Firebase</button>
+            <div id="activateResult"></div>
+        </div>
+    </div>
+
+    <!-- Firebase CDN -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    
+    <!-- Firebase Service -->
+    <script src="firebase-service.js"></script>
+
+    <script>
+        let firebaseService = null;
+        let localData = {};
+
+        function checkLocalStorage() {
+            const result = document.getElementById('localStorageResult');
+            result.innerHTML = '<p>🔍 Đang kiểm tra...</p>';
+
+            // Kiểm tra sessions
+            const sessions = localStorage.getItem('aeck_exam_sessions');
+            const sessionData = {};
+            
+            if (sessions) {
+                try {
+                    const sessionsList = JSON.parse(sessions);
+                    sessionsList.forEach(session => {
+                        const data = localStorage.getItem(`aeck_exam_results_${session.code}`);
+                        sessionData[session.code] = {
+                            session: session,
+                            hasData: !!data,
+                            recordCount: data ? JSON.parse(data).data?.length || 0 : 0
+                        };
+                    });
+
+                    localData = { sessions: sessionsList, sessionData };
+
+                    let html = '<div class="success">';
+                    html += `<h4>✅ Tìm thấy ${sessionsList.length} đợt thi:</h4>`;
+                    sessionsList.forEach(session => {
+                        const info = sessionData[session.code];
+                        html += `<p>• <strong>${session.name}</strong> (${session.code}): ${info.recordCount} bản ghi</p>`;
+                    });
+                    html += '</div>';
+                    result.innerHTML = html;
+
+                    // Enable next step
+                    document.querySelector('button[onclick="initFirebase()"]').disabled = false;
+                } catch (error) {
+                    result.innerHTML = `<div class="error">❌ Lỗi đọc dữ liệu: ${error.message}</div>`;
+                }
+            } else {
+                result.innerHTML = '<div class="warning">⚠️ Không tìm thấy dữ liệu trong localStorage</div>';
+            }
+        }
+
+        async function initFirebase() {
+            const result = document.getElementById('firebaseResult');
+            result.innerHTML = '<p>🔥 Đang kết nối Firebase...</p>';
+
+            try {
+                firebaseService = new FirebaseService();
+                const success = await firebaseService.initialize();
+                
+                if (success) {
+                    result.innerHTML = '<div class="success">✅ Kết nối Firebase thành công!</div>';
+                    document.getElementById('migrateBtn').disabled = false;
+                } else {
+                    result.innerHTML = '<div class="error">❌ Không thể kết nối Firebase. Kiểm tra cấu hình.</div>';
+                }
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Lỗi Firebase: ${error.message}</div>`;
+            }
+        }
+
+        async function migrateData() {
+            const result = document.getElementById('migrateResult');
+            result.innerHTML = '<p>📤 Đang chuyển dữ liệu...</p>';
+
+            try {
+                // Upload sessions
+                for (const session of localData.sessions) {
+                    await firebaseService.createSession(session);
+                }
+
+                // Upload exam results
+                for (const [sessionCode, info] of Object.entries(localData.sessionData)) {
+                    if (info.hasData) {
+                        const data = JSON.parse(localStorage.getItem(`aeck_exam_results_${sessionCode}`));
+                        await firebaseService.uploadExamResults(sessionCode, data.data);
+                    }
+                }
+
+                result.innerHTML = '<div class="success">✅ Chuyển dữ liệu thành công!</div>';
+                document.getElementById('activateBtn').disabled = false;
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Lỗi chuyển dữ liệu: ${error.message}</div>`;
+            }
+        }
+
+        async function activateFirebase() {
+            const result = document.getElementById('activateResult');
+            result.innerHTML = '<p>⚙️ Đang kích hoạt Firebase mode...</p>';
+
+            try {
+                // Set Firebase mode flag
+                localStorage.setItem('aeck_use_firebase', 'true');
+                
+                result.innerHTML = `
+                    <div class="success">
+                        <h4>🎉 Hoàn thành!</h4>
+                        <p>✅ Dữ liệu đã được chuyển sang Firebase thành công!</p>
+                        <p>✅ Hệ thống sẽ tự động sử dụng Firebase từ nay.</p>
+                        <p><strong>Lợi ích:</strong></p>
+                        <ul>
+                            <li>Dữ liệu có thể truy cập từ mọi trình duyệt</li>
+                            <li>Đồng bộ giữa các thiết bị</li>
+                            <li>Dữ liệu an toàn trên cloud</li>
+                        </ul>
+                        <p><a href="index.html" class="btn">🏠 Về trang chính</a></p>
+                        <p><a href="admin.html" class="btn">⚙️ Mở Admin</a></p>
+                    </div>
+                `;
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Lỗi kích hoạt: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -9,6 +9,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Firebase CDN -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    
     <style>
         .modal-overlay {
             position: fixed;
@@ -571,12 +577,15 @@
             }
 
             .exam-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr !important;
                 gap: 15px;
+                margin: 0 5px;
             }
 
             .exam-result-card {
                 padding: 18px 20px;
+                width: 100%;
+                max-width: 100%;
             }
 
             .card-actions {
@@ -1723,5 +1732,13 @@
             showEmailInput();
         });
     </script>
+    
+    <!-- Firebase CDN -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    
+    <!-- Firebase Service -->
+    <script src="firebase-service.js"></script>
 </body>
 </html>

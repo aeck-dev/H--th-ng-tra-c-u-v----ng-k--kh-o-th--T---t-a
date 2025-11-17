@@ -1,6 +1,62 @@
+// Global Firebase service instance
+let firebaseService = null;
+
+// Check if Firebase mode is enabled
+async function initDataSource() {
+    const useFirebase = localStorage.getItem('aeck_use_firebase');
+    if (useFirebase === 'true' && window.FirebaseService) {
+        try {
+            firebaseService = new FirebaseService();
+            const success = await firebaseService.initialize();
+            if (success) {
+                console.log('🔥 Using Firebase as data source');
+                return 'firebase';
+            }
+        } catch (error) {
+            console.warn('Firebase init failed, falling back to localStorage:', error);
+        }
+    }
+    console.log('💾 Using localStorage as data source');
+    return 'localStorage';
+}
+
 // Load available exam sessions
-function loadExamSessions() {
+async function loadExamSessions() {
     console.log('🔍 loadExamSessions() được gọi');
+    
+    const dataSource = await initDataSource();
+    
+    if (dataSource === 'firebase' && firebaseService) {
+        return loadExamSessionsFromFirebase();
+    } else {
+        return loadExamSessionsFromLocalStorage();
+    }
+}
+
+// Load from Firebase
+async function loadExamSessionsFromFirebase() {
+    try {
+        const sessions = await firebaseService.getSessions();
+        console.log('📦 Sessions từ Firebase:', sessions);
+        
+        if (!sessions || sessions.length === 0) {
+            console.log('❌ No sessions found from Firebase');
+            const examSessionSelect = document.getElementById('examSession');
+            if (examSessionSelect) {
+                examSessionSelect.innerHTML = '<option value="">Chưa có đợt thi nào (Liên hệ admin)</option>';
+            }
+            return;
+        }
+        
+        populateSessionSelect(sessions);
+    } catch (error) {
+        console.error('Error loading from Firebase:', error);
+        loadExamSessionsFromLocalStorage(); // Fallback
+    }
+}
+
+// Load from localStorage (original function)
+function loadExamSessionsFromLocalStorage() {
     try {
         const sessions = localStorage.getItem('aeck_exam_sessions');
         console.log('📦 Raw sessions từ localStorage:', sessions);
@@ -17,63 +73,93 @@ function loadExamSessions() {
         const sessionsList = JSON.parse(sessions);
         console.log('Loading exam sessions from admin:', sessionsList);
         
-        const examSessionSelect = document.getElementById('examSession');
-        if (examSessionSelect) {
-            // Clear existing options
-            examSessionSelect.innerHTML = '<option value="">Chọn đợt thi</option>';
-            
-            let hasValidSessions = false;
-            
-            // Add sessions as options - only if they have data and are active
-            sessionsList.forEach(session => {
-                console.log(`🔎 Checking session: ${session.code}, status: ${session.status}`);
-                // Check if session has data
-                const sessionData = localStorage.getItem(`aeck_exam_results_${session.code}`);
-                console.log(`📊 Session data for ${session.code}:`, sessionData ? 'có dữ liệu' : 'không có dữ liệu');
-                const hasData = sessionData && JSON.parse(sessionData).data.length > 0;
-                
-                // Only show sessions that have data and are active
-                if (hasData && session.status === 'active') {
-                    console.log(`✅ Adding session to select: ${session.code}`);
-                    const option = document.createElement('option');
-                    option.value = session.code;
-                    option.textContent = `${session.name}`;
-                    
-                    // Add data count indicator
-                    const dataCount = JSON.parse(sessionData).data.length;
-                    option.textContent += ` (${dataCount} thí sinh)`;
-                    
-                    // Set as selected if it's the default session
-                    if (session.isDefault) {
-                        option.selected = true;
-                    }
-                    
-                    examSessionSelect.appendChild(option);
-                    hasValidSessions = true;
-                } else {
-                    console.log(`❌ Session ${session.code} bị loại - hasData: ${hasData}, status: ${session.status}`);
-                }
-            });
-            
-            if (!hasValidSessions) {
-                examSessionSelect.innerHTML = '<option value="">Chưa có đợt thi nào có dữ liệu</option>';
-                console.log('No sessions with data found');
-            } else {
-                console.log('Exam sessions loaded successfully:', examSessionSelect.options.length - 1, 'sessions');
-            }
-        } else {
-            console.error('examSession select element not found');
-        }
+        populateSessionSelect(sessionsList);
     } catch (error) {
-        console.error('Lỗi load sessions:', error);
-        const examSessionSelect = document.getElementById('examSession');
-        if (examSessionSelect) {
-            examSessionSelect.innerHTML = '<option value="">Lỗi tải đợt thi</option>';
+        console.error('Error loading sessions from localStorage:', error);
+    }
+}
+
+// Common function to populate session select
+function populateSessionSelect(sessionsList) {
+    const examSessionSelect = document.getElementById('examSession');
+    if (!examSessionSelect) {
+        console.error('examSession select element not found');
+        return;
+    }
+
+    // Clear existing options
+    examSessionSelect.innerHTML = '<option value="">Chọn đợt thi</option>';
+    
+    let hasValidSessions = false;
+    
+    // Add sessions as options - only if they have data and are active
+    sessionsList.forEach(session => {
+        console.log(`🔎 Checking session: ${session.code}, status: ${session.status}`);
+        // Check if session has data
+        const sessionData = localStorage.getItem(`aeck_exam_results_${session.code}`);
+        console.log(`📊 Session data for ${session.code}:`, sessionData ? 'có dữ liệu' : 'không có dữ liệu');
+        
+        let hasData = false;
+        if (sessionData) {
+            try {
+                const data = JSON.parse(sessionData);
+                hasData = data && data.data && data.data.length > 0;
+            } catch (e) {
+                console.warn(`Invalid data format for session ${session.code}:`, e);
+            }
         }
+        
+        // Only show sessions that have data and are active
+        if (hasData && session.status === 'active') {
+            console.log(`✅ Adding session to select: ${session.code}`);
+            const option = document.createElement('option');
+            option.value = session.code;
+            option.textContent = `${session.name}`;
+            
+            // Add data count indicator
+            try {
+                const dataCount = JSON.parse(sessionData).data.length;
+                option.textContent += ` (${dataCount} thí sinh)`;
+            } catch (e) {
+                console.warn('Error getting data count:', e);
+            }
+            
+            // Set as selected if it's the default session
+            if (session.isDefault) {
+                option.selected = true;
+            }
+            
+            examSessionSelect.appendChild(option);
+            hasValidSessions = true;
+        } else {
+            console.log(`❌ Session ${session.code} bị loại - hasData: ${hasData}, status: ${session.status}`);
+        }
+    });
+    
+    if (!hasValidSessions) {
+        examSessionSelect.innerHTML = '<option value="">Chưa có đợt thi nào có dữ liệu</option>';
+        console.log('No sessions with data found');
+    } else {
+        console.log('Exam sessions loaded successfully:', examSessionSelect.options.length - 1, 'sessions');
     }
 }
 
 // Note: getDefaultSessions removed - user page only shows admin-created sessions
+
+// Main lookup function that auto-detects data source
+async function lookupResult(email, sessionCode = null) {
+    const useFirebase = localStorage.getItem('aeck_use_firebase');
+    
+    if (useFirebase === 'true' && firebaseService) {
+        try {
+            return await firebaseService.lookupResult(email, sessionCode);
+        } catch (error) {
+            console.warn('Firebase lookup failed, falling back to localStorage:', error);
+        }
+    }
+    
+    return lookupFromLocalStorage(email, sessionCode);
+}
 
 // Lookup function from localStorage (admin uploaded data)
 function lookupFromLocalStorage(email, sessionCode = null) {
