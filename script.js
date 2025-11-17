@@ -27,9 +27,9 @@ async function loadExamSessions() {
     const dataSource = await initDataSource();
     
     if (dataSource === 'firebase' && firebaseService) {
-        return loadExamSessionsFromFirebase();
+        return await loadExamSessionsFromFirebase();
     } else {
-        return loadExamSessionsFromLocalStorage();
+        return await loadExamSessionsFromLocalStorage();
     }
 }
 
@@ -48,15 +48,15 @@ async function loadExamSessionsFromFirebase() {
             return;
         }
         
-        populateSessionSelect(sessions);
+        await populateSessionSelect(sessions);
     } catch (error) {
         console.error('Error loading from Firebase:', error);
-        loadExamSessionsFromLocalStorage(); // Fallback
+        await loadExamSessionsFromLocalStorage(); // Fallback
     }
 }
 
 // Load from localStorage (original function)
-function loadExamSessionsFromLocalStorage() {
+async function loadExamSessionsFromLocalStorage() {
     try {
         const sessions = localStorage.getItem('aeck_exam_sessions');
         console.log('📦 Raw sessions từ localStorage:', sessions);
@@ -73,14 +73,14 @@ function loadExamSessionsFromLocalStorage() {
         const sessionsList = JSON.parse(sessions);
         console.log('Loading exam sessions from admin:', sessionsList);
         
-        populateSessionSelect(sessionsList);
+        await populateSessionSelect(sessionsList);
     } catch (error) {
         console.error('Error loading sessions from localStorage:', error);
     }
 }
 
 // Common function to populate session select
-function populateSessionSelect(sessionsList) {
+async function populateSessionSelect(sessionsList) {
     const examSessionSelect = document.getElementById('examSession');
     if (!examSessionSelect) {
         console.error('examSession select element not found');
@@ -93,19 +93,43 @@ function populateSessionSelect(sessionsList) {
     let hasValidSessions = false;
     
     // Add sessions as options - only if they have data and are active
-    sessionsList.forEach(session => {
+    for (const session of sessionsList) {
         console.log(`🔎 Checking session: ${session.code}, status: ${session.status}`);
-        // Check if session has data
-        const sessionData = localStorage.getItem(`aeck_exam_results_${session.code}`);
-        console.log(`📊 Session data for ${session.code}:`, sessionData ? 'có dữ liệu' : 'không có dữ liệu');
         
         let hasData = false;
-        if (sessionData) {
+        let dataCount = 0;
+        
+        // Check data from Firebase first, then localStorage
+        const useFirebase = localStorage.getItem('aeck_use_firebase');
+        if (useFirebase === 'true' && firebaseService && firebaseService.isConnected) {
             try {
-                const data = JSON.parse(sessionData);
-                hasData = data && data.data && data.data.length > 0;
-            } catch (e) {
-                console.warn(`Invalid data format for session ${session.code}:`, e);
+                console.log(`🔥 Checking Firebase data for ${session.code}`);
+                const firebaseData = await firebaseService.getExamResults(session.code);
+                if (firebaseData && firebaseData.data && firebaseData.data.length > 0) {
+                    hasData = true;
+                    dataCount = firebaseData.data.length;
+                    console.log(`📊 Firebase data for ${session.code}: ${dataCount} records`);
+                }
+            } catch (error) {
+                console.warn(`Failed to check Firebase data for ${session.code}:`, error);
+            }
+        }
+        
+        // Fallback to localStorage if no Firebase data
+        if (!hasData) {
+            console.log(`📦 Checking localStorage data for ${session.code}`);
+            const sessionData = localStorage.getItem(`aeck_exam_results_${session.code}`);
+            if (sessionData) {
+                try {
+                    const data = JSON.parse(sessionData);
+                    if (data && data.data && data.data.length > 0) {
+                        hasData = true;
+                        dataCount = data.data.length;
+                        console.log(`📊 localStorage data for ${session.code}: ${dataCount} records`);
+                    }
+                } catch (e) {
+                    console.warn(`Invalid data format for session ${session.code}:`, e);
+                }
             }
         }
         
@@ -117,11 +141,8 @@ function populateSessionSelect(sessionsList) {
             option.textContent = `${session.name}`;
             
             // Add data count indicator
-            try {
-                const dataCount = JSON.parse(sessionData).data.length;
+            if (dataCount > 0) {
                 option.textContent += ` (${dataCount} thí sinh)`;
-            } catch (e) {
-                console.warn('Error getting data count:', e);
             }
             
             // Set as selected if it's the default session
@@ -134,7 +155,7 @@ function populateSessionSelect(sessionsList) {
         } else {
             console.log(`❌ Session ${session.code} bị loại - hasData: ${hasData}, status: ${session.status}`);
         }
-    });
+    }
     
     if (!hasValidSessions) {
         examSessionSelect.innerHTML = '<option value="">Chưa có đợt thi nào có dữ liệu</option>';
@@ -189,16 +210,39 @@ function lookupFromLocalStorage(email, sessionCode = null) {
             };
         }
         
-        const savedData = localStorage.getItem(`aeck_exam_results_${sessionCode}`);
+        let data = null;
+        let metadata = null;
         
-        if (!savedData) {
-            return {
-                success: false,
-                message: `Chưa có dữ liệu kết quả cho đợt thi này. Vui lòng liên hệ admin để cập nhật dữ liệu.`
-            };
+        // Check Firebase first
+        try {
+            if (window.firebaseService) {
+                const firebaseData = await window.firebaseService.getExamResults(sessionCode);
+                if (firebaseData) {
+                    data = firebaseData.data || firebaseData;
+                    metadata = firebaseData.metadata;
+                    console.log('🔥 Using Firebase data for lookup');
+                }
+            }
+        } catch (error) {
+            console.log('Firebase not available, checking localStorage');
         }
+        
+        // Fallback to localStorage if Firebase data not found
+        if (!data) {
+            const savedData = localStorage.getItem(`aeck_exam_results_${sessionCode}`);
+            
+            if (!savedData) {
+                return {
+                    success: false,
+                    message: `Chưa có dữ liệu kết quả cho đợt thi này. Vui lòng liên hệ admin để cập nhật dữ liệu.`
+                };
+            }
 
-        const { data, metadata } = JSON.parse(savedData);
+            const parsedData = JSON.parse(savedData);
+            data = parsedData.data || parsedData;
+            metadata = parsedData.metadata;
+            console.log('📦 Using localStorage data for lookup');
+        }
         const result = data.find(row => row.email === email);
 
         if (result) {
@@ -900,8 +944,8 @@ setInterval(() => {
 }, 2000);
 
 // Initialize page
-document.addEventListener('DOMContentLoaded', function() {
-    loadExamSessions();
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadExamSessions();
     window.lastSessionsString = localStorage.getItem('aeck_exam_sessions');
     showMainMenu();
 });

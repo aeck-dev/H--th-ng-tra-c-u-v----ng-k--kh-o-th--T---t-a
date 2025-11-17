@@ -380,7 +380,7 @@ class AECKAdmin {
         }
     }
 
-    loadCurrentData() {
+    async loadCurrentData() {
         try {
             // Calculate total stats across all sessions
             let totalRecords = 0;
@@ -388,27 +388,46 @@ class AECKAdmin {
             let totalScore = 0;
             let recordsWithScore = 0;
             
-            this.sessions.forEach(session => {
-                const sessionData = localStorage.getItem(`aeck_exam_results_${session.code}`);
+            for (const session of this.sessions) {
+                let sessionData = null;
+                
+                // Check Firebase first
+                try {
+                    if (window.firebaseService) {
+                        sessionData = await window.firebaseService.getExamResults(session.code);
+                    }
+                } catch (error) {
+                    console.log('Firebase not available, checking localStorage');
+                }
+                
+                // Fallback to localStorage if Firebase data not found
+                if (!sessionData) {
+                    const localData = localStorage.getItem(`aeck_exam_results_${session.code}`);
+                    if (localData) {
+                        const parsed = JSON.parse(localData);
+                        sessionData = parsed;
+                    }
+                }
+                
                 if (sessionData) {
-                    const parsed = JSON.parse(sessionData);
-                    totalRecords += parsed.metadata.totalRecords || 0;
+                    totalRecords += sessionData.metadata?.totalRecords || sessionData.length || 0;
                     
-                    if (parsed.metadata.lastUpdate) {
-                        const updateTime = new Date(parsed.metadata.lastUpdate);
+                    if (sessionData.metadata?.lastUpdate) {
+                        const updateTime = new Date(sessionData.metadata.lastUpdate);
                         if (!lastUpdate || updateTime > lastUpdate) {
                             lastUpdate = updateTime;
                         }
                     }
                     
-                    if (parsed.data && parsed.data.length > 0) {
-                        parsed.data.forEach(row => {
+                    const dataArray = sessionData.data || sessionData;
+                    if (dataArray && dataArray.length > 0) {
+                        dataArray.forEach(row => {
                             totalScore += row.irt_score || 0;
                             recordsWithScore++;
                         });
                     }
                 }
-            });
+            }
             
             // Update UI
             document.getElementById('totalRecords').textContent = totalRecords;
@@ -429,7 +448,7 @@ class AECKAdmin {
         }
     }
 
-    testLookup() {
+    async testLookup() {
         const email = document.getElementById('testEmail').value.trim().toLowerCase();
         const resultDiv = document.getElementById('testResult');
         
@@ -444,10 +463,29 @@ class AECKAdmin {
             
             // Search across all sessions
             for (const session of this.sessions) {
-                const sessionData = localStorage.getItem(`aeck_exam_results_${session.code}`);
+                let sessionData = null;
+                
+                // Check Firebase first
+                try {
+                    if (window.firebaseService) {
+                        sessionData = await window.firebaseService.getExamResults(session.code);
+                    }
+                } catch (error) {
+                    console.log('Firebase not available, checking localStorage');
+                }
+                
+                // Fallback to localStorage if Firebase data not found
+                if (!sessionData) {
+                    const localData = localStorage.getItem(`aeck_exam_results_${session.code}`);
+                    if (localData) {
+                        const parsed = JSON.parse(localData);
+                        sessionData = parsed.data || parsed;
+                    }
+                }
+                
                 if (sessionData) {
-                    const { data } = JSON.parse(sessionData);
-                    const found = data.find(row => row.email === email);
+                    const dataArray = Array.isArray(sessionData) ? sessionData : (sessionData.data || []);
+                    const found = dataArray.find(row => row.email === email);
                     if (found) {
                         result = found;
                         foundInSession = session;
@@ -485,14 +523,36 @@ class AECKAdmin {
         }
     }
 
-    exportData() {
+    async exportData() {
         try {
-            const savedData = localStorage.getItem('aeck_exam_results');
+            let allData = {};
             
-            if (!savedData) {
-                this.showToast('Không có dữ liệu để xuất', 'warning');
-                return;
+            // Try to get data from Firebase first
+            if (window.firebaseService) {
+                try {
+                    for (const session of this.sessions) {
+                        const sessionResults = await window.firebaseService.getExamResults(session.code);
+                        if (sessionResults) {
+                            allData[`aeck_exam_results_${session.code}`] = sessionResults;
+                        }
+                    }
+                } catch (error) {
+                    console.log('Firebase export failed, trying localStorage');
+                }
             }
+            
+            // Fallback to localStorage if no Firebase data
+            if (Object.keys(allData).length === 0) {
+                const savedData = localStorage.getItem('aeck_exam_results');
+                if (savedData) {
+                    allData = JSON.parse(savedData);
+                } else {
+                    this.showToast('Không có dữ liệu để xuất', 'warning');
+                    return;
+                }
+            }
+            
+            const savedData = JSON.stringify(allData, null, 2);
 
             const blob = new Blob([savedData], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -933,30 +993,57 @@ class AECKAdmin {
         this.showToast(`Đã cập nhật đợt thi "${updatedData.name}" thành công`, 'success');
     }
 
-    viewSessionData(sessionCode) {
+    async viewSessionData(sessionCode) {
         const session = this.sessions.find(s => s.code === sessionCode);
         if (!session) {
             this.showToast('Không tìm thấy đợt thi', 'error');
             return;
         }
 
-        const sessionData = localStorage.getItem(`aeck_exam_results_${sessionCode}`);
+        let sessionData = null;
+        let data = null;
+        let metadata = null;
+
+        // Try Firebase first
+        if (this.useFirebase && window.firebaseService && window.firebaseService.isConnected) {
+            try {
+                console.log(`🔥 Loading data from Firebase for ${sessionCode}`);
+                const firebaseData = await window.firebaseService.getExamResults(sessionCode);
+                if (firebaseData && firebaseData.data) {
+                    data = firebaseData.data;
+                    metadata = firebaseData.metadata || { sessionCode, sessionName: session.name };
+                    console.log(`✅ Firebase data found: ${data.length} records`);
+                }
+            } catch (error) {
+                console.warn('Failed to load from Firebase:', error);
+            }
+        }
+
+        // Fallback to localStorage
+        if (!data) {
+            console.log(`📦 Loading data from localStorage for ${sessionCode}`);
+            const localData = localStorage.getItem(`aeck_exam_results_${sessionCode}`);
+            if (localData) {
+                try {
+                    const parsed = JSON.parse(localData);
+                    data = parsed.data;
+                    metadata = parsed.metadata;
+                    console.log(`✅ localStorage data found: ${data?.length || 0} records`);
+                } catch (error) {
+                    console.error('Lỗi đọc dữ liệu localStorage:', error);
+                    this.showToast('Lỗi đọc dữ liệu đợt thi', 'error');
+                    return;
+                }
+            }
+        }
         
-        if (!sessionData) {
+        if (!data || data.length === 0) {
             this.showToast(`Đợt thi "${session.name}" chưa có dữ liệu`, 'warning');
             return;
         }
 
-        try {
-            const { data, metadata } = JSON.parse(sessionData);
-            
-            // Create and show data view modal
-            this.showDataViewModal(session, data, metadata);
-            
-        } catch (error) {
-            console.error('Lỗi đọc dữ liệu session:', error);
-            this.showToast('Lỗi đọc dữ liệu đợt thi', 'error');
-        }
+        // Create and show data view modal
+        this.showDataViewModal(session, data, metadata);
     }
 
     showDataViewModal(session, data, metadata) {
@@ -1094,8 +1181,8 @@ function saveToSystem() {
     window.aeckAdmin.saveToSystem();
 }
 
-function loadCurrentData() {
-    window.aeckAdmin.loadCurrentData();
+async function loadCurrentData() {
+    await window.aeckAdmin.loadCurrentData();
 }
 
 function exportData() {
@@ -1106,8 +1193,12 @@ function clearData() {
     window.aeckAdmin.clearData();
 }
 
-function testLookup() {
-    window.aeckAdmin.testLookup();
+async function testLookup() {
+    await window.aeckAdmin.testLookup();
+}
+
+async function exportData() {
+    await window.aeckAdmin.exportData();
 }
 
 // Session management functions
@@ -1149,8 +1240,8 @@ function editSession(sessionCode) {
     window.aeckAdmin.editSession(sessionCode);
 }
 
-function viewSessionData(sessionCode) {
-    window.aeckAdmin.viewSessionData(sessionCode);
+async function viewSessionData(sessionCode) {
+    await window.aeckAdmin.viewSessionData(sessionCode);
 }
 
 function updateSession(sessionCode) {
@@ -1161,7 +1252,7 @@ function closeDataViewModal() {
     document.getElementById('dataViewModal').classList.remove('show');
 }
 
-function exportSessionData() {
+async function exportSessionData() {
     // Get current session from modal title
     const title = document.getElementById('dataViewTitle').textContent;
     const sessionName = title.replace('📊 Dữ liệu: ', '');
@@ -1173,7 +1264,25 @@ function exportSessionData() {
         return;
     }
     
-    const sessionData = localStorage.getItem(`aeck_exam_results_${session.code}`);
+    let sessionData = null;
+    
+    // Check Firebase first
+    try {
+        if (window.firebaseService) {
+            sessionData = await window.firebaseService.getExamResults(session.code);
+            if (sessionData) {
+                sessionData = JSON.stringify(sessionData, null, 2);
+            }
+        }
+    } catch (error) {
+        console.log('Firebase not available, checking localStorage');
+    }
+    
+    // Fallback to localStorage if Firebase data not found
+    if (!sessionData) {
+        sessionData = localStorage.getItem(`aeck_exam_results_${session.code}`);
+    }
+    
     if (!sessionData) {
         window.aeckAdmin.showToast('Không có dữ liệu để xuất', 'warning');
         return;
@@ -1197,7 +1306,7 @@ function exportSessionData() {
     }
 }
 
-function clearSessionData() {
+async function clearSessionData() {
     const title = document.getElementById('dataViewTitle').textContent;
     const sessionName = title.replace('📊 Dữ liệu: ', '');
     
@@ -1208,14 +1317,25 @@ function clearSessionData() {
     }
     
     if (confirm(`Bạn có chắc chắn muốn xóa TẤT CẢ dữ liệu của đợt thi "${session.name}"?\nHành động này không thể hoàn tác.`)) {
+        // Remove from Firebase first
+        try {
+            if (window.firebaseService) {
+                await window.firebaseService.deleteExamResults(session.code);
+                console.log('Deleted from Firebase');
+            }
+        } catch (error) {
+            console.log('Firebase delete failed:', error);
+        }
+        
+        // Also remove from localStorage
         localStorage.removeItem(`aeck_exam_results_${session.code}`);
         
         // Update session record count
         session.recordCount = 0;
         session.lastUpdate = null;
-        window.aeckAdmin.saveSessions();
+        await window.aeckAdmin.saveSessions();
         window.aeckAdmin.renderSessions();
-        window.aeckAdmin.loadCurrentData();
+        await window.aeckAdmin.loadCurrentData();
         
         // Close modal
         closeDataViewModal();
