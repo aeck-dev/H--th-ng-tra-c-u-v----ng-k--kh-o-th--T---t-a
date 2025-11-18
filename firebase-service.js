@@ -43,11 +43,16 @@ class FirebaseService {
 
     async testConnection() {
         try {
-            await this.database.ref('/').limitToFirst(1).once('value');
+            // Test with public read access first
+            console.log('🔥 Testing Firebase connection...');
+            const testRef = this.database.ref('/sessions');
+            await testRef.limitToFirst(1).once('value');
             this.isConnected = true;
+            console.log('✅ Firebase connection successful');
             return true;
         } catch (error) {
             console.error('Firebase connection test failed:', error);
+            console.log('📝 Error details:', error.code, error.message);
             this.isConnected = false;
             return false;
         }
@@ -206,6 +211,16 @@ class FirebaseService {
         }
     }
 
+    async deleteExamResults(sessionCode) {
+        try {
+            await this.database.ref(`exam_results/${sessionCode}`).remove();
+            return { success: true };
+        } catch (error) {
+            console.error('Error deleting exam results:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
     async migrateFromLocalStorage() {
         try {
             if (!this.currentUser) {
@@ -239,4 +254,6 @@ class FirebaseService {
     }
 }
 
-window.firebaseService = new FirebaseService();
+// Expose both class and instance to window
+window.FirebaseService = FirebaseService;
+window.firebaseService = null; // Will be initialized by script.js

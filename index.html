@@ -921,6 +921,129 @@
         let CURRENT_SESSION = 'tsa-2026-dot-1';
         const EXAM_NAMES = { 'tsa-2026-dot-1': 'Bài thi TSA 2026 chính thức - Đợt 2' };
 
+        // Firebase helpers
+        let firebaseClient = null;
+        let firebaseInitPromise = null;
+        let cachedSessions = [];
+        const sessionResultsCache = new Map();
+
+        async function ensureFirebaseClient() {
+            if (firebaseClient?.isConnected) {
+                return firebaseClient;
+            }
+
+            if (!window.FirebaseService) {
+                console.warn('FirebaseService chưa sẵn sàng trên window');
+                return null;
+            }
+
+            if (!firebaseInitPromise) {
+                firebaseInitPromise = (async () => {
+                    try {
+                        const instance = new window.FirebaseService();
+                        const initialized = await instance.initialize();
+                        if (initialized && instance.isConnected) {
+                            firebaseClient = instance;
+                            window.firebaseService = instance;
+                            return instance;
+                        }
+                        console.warn('FirebaseService khởi tạo nhưng chưa kết nối');
+                        return null;
+                    } catch (error) {
+                        console.error('Không thể khởi tạo FirebaseService:', error);
+                        return null;
+                    }
+                })();
+            }
+
+            const instance = await firebaseInitPromise;
+            if (!instance || !instance.isConnected) {
+                firebaseInitPromise = null;
+                return null;
+            }
+
+            return instance;
+        }
+
+        async function fetchSessionsWithFallback() {
+            let sessions = [];
+            const service = await ensureFirebaseClient();
+
+            if (service?.isConnected) {
+                try {
+                    sessions = await service.getSessions();
+                } catch (error) {
+                    console.error('Không thể lấy danh sách đợt thi từ Firebase:', error);
+                }
+            }
+
+            if (!Array.isArray(sessions) || sessions.length === 0) {
+                const localSessions = localStorage.getItem('aeck_exam_sessions');
+                if (localSessions) {
+                    try {
+                        sessions = JSON.parse(localSessions);
+                    } catch (error) {
+                        console.error('Không thể đọc dữ liệu đợt thi từ localStorage:', error);
+                    }
+                }
+            }
+
+            return Array.isArray(sessions) ? sessions : [];
+        }
+
+        async function fetchSessionResults(sessionCode) {
+            if (!sessionCode) return null;
+            if (sessionResultsCache.has(sessionCode)) {
+                return sessionResultsCache.get(sessionCode);
+            }
+
+            let payload = null;
+            const service = await ensureFirebaseClient();
+
+            if (service?.isConnected) {
+                try {
+                    const firebaseData = await service.getExamResults(sessionCode);
+                    if (firebaseData) {
+                        const recordsFromFirebase = Array.isArray(firebaseData) ? firebaseData : (firebaseData.data || []);
+                        payload = {
+                            records: Array.isArray(recordsFromFirebase) ? recordsFromFirebase : [],
+                            metadata: firebaseData.metadata || {},
+                            source: 'firebase'
+                        };
+                    }
+                } catch (error) {
+                    console.error(`Không thể lấy dữ liệu kết quả của ${sessionCode} từ Firebase:`, error);
+                }
+            }
+
+            if (!payload) {
+                const localResults = localStorage.getItem(`aeck_exam_results_${sessionCode}`);
+                if (localResults) {
+                    try {
+                        const parsed = JSON.parse(localResults);
+                        const recordsFromLocal = parsed.data || parsed;
+                        payload = {
+                            records: Array.isArray(recordsFromLocal) ? recordsFromLocal : [],
+                            metadata: parsed.metadata || {},
+                            source: 'localStorage'
+                        };
+                    } catch (error) {
+                        console.error(`Không thể đọc dữ liệu local của ${sessionCode}:`, error);
+                    }
+                }
+            }
+
+            if (payload) {
+                sessionResultsCache.set(sessionCode, payload);
+            }
+
+            return payload;
+        }
+
+        function normalizeEmail(value = '') {
+            return value.trim().toLowerCase();
+        }
+
         // Modal functions
         function showModal(title, subtitle, content, actions) {
             document.getElementById('modalTitle').textContent = title;
@@ -1307,142 +1430,164 @@
             }
         }
 
-        function loadExamResults(email) {
+        async function loadExamResults(email) {
             console.log('🔍 Loading exam results for:', email);
-            
-            const sessions = localStorage.getItem('aeck_exam_sessions');
+
             const examResultsGrid = document.getElementById('examResultsGrid');
-            
-            if (!sessions) {
-                examResultsGrid.innerHTML = '<p style="text-align: center; color: #666;">Chưa có đợt thi nào. Vui lòng liên hệ admin.</p>';
-                return;
-            }
-            
-            const sessionsList = JSON.parse(sessions);
-            let hasResults = false;
-            
-            examResultsGrid.innerHTML = '';
-            
-            sessionsList.forEach(session => {
-                if (session.status !== 'active') return; // Chỉ hiển thị đợt thi đang hoạt động
-                
-                const sessionData = localStorage.getItem(`aeck_exam_results_${session.code}`);
-                const hasData = sessionData && JSON.parse(sessionData).data.length > 0;
-                
-                if (!hasData) return; // Chỉ hiển thị đợt thi có dữ liệu
-                
-                const data = JSON.parse(sessionData);
-                const userResult = data.data.find(record => 
-                    record.email && record.email.toLowerCase().trim() === email.toLowerCase().trim()
-                );
-                
-                const hasResult = !!userResult;
-                hasResults = hasResults || hasResult;
-                
-                const card = document.createElement('div');
-                card.className = `exam-result-card ${hasResult ? 'has-result' : 'no-result'}`;
-                
-                // Lấy ngày thi từ session
-                let examDate, examDateDisplay;
-                if (session.examDate) {
-                    try {
-                        examDate = new Date(session.examDate);
-                        examDateDisplay = examDate.toLocaleDateString('vi-VN', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                        });
-                    } catch (e) {
-                        console.warn('Invalid examDate:', session.examDate);
+            if (!examResultsGrid) return;
+
+            const normalizedEmail = normalizeEmail(email);
+            examResultsGrid.innerHTML = '<p style="text-align: center; color: #666;">Đang tải dữ liệu từ hệ thống...</p>';
+
+            try {
+                const sessionsList = await fetchSessionsWithFallback();
+                cachedSessions = sessionsList;
+
+                if (!sessionsList.length) {
+                    examResultsGrid.innerHTML = '<p style="text-align: center; color: #666;">Chưa có đợt thi nào. Vui lòng liên hệ admin.</p>';
+                    return;
+                }
+
+                const activeSessions = sessionsList.filter(session => session.status === 'active');
+                if (!activeSessions.length) {
+                    examResultsGrid.innerHTML = '<p style="text-align: center; color: #666;">Không có đợt thi nào đang hoạt động.</p>';
+                    return;
+                }
+
+                sessionResultsCache.clear();
+                const cardsData = [];
+
+                for (const session of activeSessions) {
+                    const sessionResults = await fetchSessionResults(session.code);
+                    if (!sessionResults || !Array.isArray(sessionResults.records) || sessionResults.records.length === 0) {
+                        continue;
+                    }
+
+                    const userResult = sessionResults.records.find(record => {
+                        const recordEmail = normalizeEmail(record.email || record.Email || record.EmailAddress || '');
+                        return recordEmail && recordEmail === normalizedEmail;
+                    });
+
+                    cardsData.push({ session, hasResult: Boolean(userResult) });
+                }
+
+                if (!cardsData.length) {
+                    examResultsGrid.innerHTML = '<p style="text-align: center; color: #666;">Không có đợt thi nào có dữ liệu kết quả.</p>';
+                    return;
+                }
+
+                examResultsGrid.innerHTML = '';
+
+                cardsData.forEach(({ session, hasResult }) => {
+                    const card = document.createElement('div');
+                    card.className = `exam-result-card ${hasResult ? 'has-result' : 'no-result'}`;
+
+                    // Lấy ngày thi từ session
+                    let examDate;
+                    let examDateDisplay;
+                    if (session.examDate) {
+                        try {
+                            examDate = new Date(session.examDate);
+                            examDateDisplay = examDate.toLocaleDateString('vi-VN', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                            });
+                        } catch (error) {
+                            console.warn('Invalid examDate:', session.examDate);
+                            examDate = new Date('2025-04-26');
+                            examDateDisplay = 'Chưa cập nhật';
+                        }
+                    } else {
                         examDate = new Date('2025-04-26');
                         examDateDisplay = 'Chưa cập nhật';
                     }
-                } else {
-                    examDate = new Date('2025-04-26'); // Ngày mặc định
-                    examDateDisplay = 'Chưa cập nhật';
-                }
-                
-                const regEndDate = new Date(examDate);
-                regEndDate.setDate(regEndDate.getDate() - 20); // 20 ngày trước ngày thi
-                const regStartDate = new Date(regEndDate);
-                regStartDate.setDate(regStartDate.getDate() - 30); // 30 ngày đăng ký
-                
-                // Lấy thông tin hình thức đăng ký
-                const registrationType = session.registrationType || 'free';
-                const registrationTypeDisplay = registrationType === 'premium' ? 'Premium' : 'Miễn phí';
-                const registrationTypeBadge = registrationType === 'premium' ? 'badge-premium' : 'badge-free';
-                
-                card.innerHTML = `
-                    <h3 class="exam-result-title">${session.name}</h3>
-                    
-                    <div class="exam-info-grid">
-                        <div class="info-row">
-                            <span class="info-label">Hình thức thi:</span>
-                            <span class="info-value"><span class="info-badge highlight">Online</span></span>
+
+                    const regEndDate = new Date(examDate);
+                    regEndDate.setDate(regEndDate.getDate() - 20);
+                    const regStartDate = new Date(regEndDate);
+                    regStartDate.setDate(regStartDate.getDate() - 30);
+
+                    const registrationType = session.registrationType || 'free';
+                    const registrationTypeDisplay = registrationType === 'premium' ? 'Premium' : 'Miễn phí';
+                    const registrationTypeBadge = registrationType === 'premium' ? 'badge-premium' : 'badge-free';
+
+                    card.innerHTML = `
+                        <h3 class="exam-result-title">${session.name}</h3>
+                        
+                        <div class="exam-info-grid">
+                            <div class="info-row">
+                                <span class="info-label">Hình thức thi:</span>
+                                <span class="info-value"><span class="info-badge highlight">Online</span></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Ngày thi:</span>
+                                <span class="info-value" style="font-weight: 700; color: rgb(192, 0, 0);">${examDateDisplay}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Hình thức chấm điểm:</span>
+                                <span class="info-value">IRT</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Hình thức đăng ký:</span>
+                                <span class="info-value"><span class="info-badge ${registrationTypeBadge}">${registrationTypeDisplay}</span></span>
+                            </div>
                         </div>
-                        <div class="info-row">
-                            <span class="info-label">Ngày thi:</span>
-                            <span class="info-value" style="font-weight: 700; color: rgb(192, 0, 0);">${examDateDisplay}</span>
+                        
+                        <div class="card-actions">
+                            ${hasResult ? 
+                                `<a class="view-result-link" onclick="viewExamResult('${session.code}', '${email}')">Xem kết quả</a>
+                                 <div class="card-action-buttons">
+                                    <button class="register-btn registered">Đã đăng ký</button>
+                                 </div>` :
+                                `<div></div>
+                                 <div class="card-action-buttons">
+                                    <button class="expired-btn" disabled>Hết hạn đăng ký</button>
+                                 </div>`
+                            }
                         </div>
-                        <div class="info-row">
-                            <span class="info-label">Hình thức chấm điểm:</span>
-                            <span class="info-value">IRT</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Hình thức đăng ký:</span>
-                            <span class="info-value"><span class="info-badge ${registrationTypeBadge}">${registrationTypeDisplay}</span></span>
-                        </div>
-                    </div>
-                    
-                    <div class="card-actions">
-                        ${hasResult ? 
-                            `<a class="view-result-link" onclick="viewExamResult('${session.code}', '${email}')">Xem kết quả</a>
-                             <div class="card-action-buttons">
-                                <button class="register-btn registered">Đã đăng ký</button>
-                             </div>` :
-                            `<div></div>
-                             <div class="card-action-buttons">
-                                <button class="expired-btn" disabled>Hết hạn đăng ký</button>
-                             </div>`
-                        }
-                    </div>
-                `;
-                
-                examResultsGrid.appendChild(card);
-            });
-            
-            if (examResultsGrid.children.length === 0) {
-                examResultsGrid.innerHTML = '<p style="text-align: center; color: #666;">Không có đợt thi nào đang hoạt động.</p>';
+                    `;
+
+                    examResultsGrid.appendChild(card);
+                });
+            } catch (error) {
+                console.error('Không thể tải card dữ liệu từ Firebase:', error);
+                examResultsGrid.innerHTML = '<p style="text-align: center; color: #dc3545;">Có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại sau.</p>';
             }
         }
         
-        function viewExamResult(sessionCode, email) {
+        async function viewExamResult(sessionCode, email) {
             console.log('📊 Viewing result for:', email, 'in session:', sessionCode);
-            
-            const sessionData = localStorage.getItem(`aeck_exam_results_${sessionCode}`);
-            if (!sessionData) {
-                alert('Không tìm thấy dữ liệu đợt thi');
-                return;
+
+            try {
+                let sessionResults = sessionResultsCache.get(sessionCode);
+                if (!sessionResults) {
+                    sessionResults = await fetchSessionResults(sessionCode);
+                }
+
+                if (!sessionResults || !Array.isArray(sessionResults.records) || sessionResults.records.length === 0) {
+                    alert('Không tìm thấy dữ liệu đợt thi');
+                    return;
+                }
+
+                const normalizedEmail = normalizeEmail(email);
+                const userResult = sessionResults.records.find(record => {
+                    const recordEmail = normalizeEmail(record.email || record.Email || record.EmailAddress || '');
+                    return recordEmail && recordEmail === normalizedEmail;
+                });
+
+                if (!userResult) {
+                    alert('Không tìm thấy kết quả cho email này');
+                    return;
+                }
+
+                const session = cachedSessions.find(s => s.code === sessionCode) || null;
+                displayResult(userResult, sessionCode, session);
+            } catch (error) {
+                console.error('Không thể tải dữ liệu kết quả từ Firebase:', error);
+                alert('Có lỗi xảy ra khi truy cập dữ liệu. Vui lòng thử lại sau.');
             }
-            
-            // Lấy thông tin session
-            const sessionsStr = localStorage.getItem('aeck_exam_sessions');
-            const sessions = sessionsStr ? JSON.parse(sessionsStr) : [];
-            const session = sessions.find(s => s.code === sessionCode);
-            
-            const data = JSON.parse(sessionData);
-            const userResult = data.data.find(record => 
-                record.email && record.email.toLowerCase().trim() === email.toLowerCase().trim()
-            );
-            
-            if (!userResult) {
-                alert('Không tìm thấy kết quả cho email này');
-                return;
-            }
-            
-            // Hiển thị kết quả (sử dụng modal hiện tại)
-            displayResult(userResult, sessionCode, session);
         }
         
         function displayResult(result, sessionCode, session) {
@@ -1689,7 +1834,7 @@
             document.getElementById('lookupResults').style.display = 'none';
         }
 
-        function submitEmail() {
+        async function submitEmail() {
             const emailInput = document.getElementById('userEmail');
             const email = emailInput.value.trim();
             
@@ -1708,8 +1853,13 @@
             currentUserEmail = email;
             document.getElementById('displayEmail').textContent = email;
             
-            loadExamResults(email);
-            showResultsDashboard();
+            try {
+                await loadExamResults(email);
+                showResultsDashboard();
+            } catch (error) {
+                console.error('Không thể tải dữ liệu kết quả:', error);
+                alert('Có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại sau.');
+            }
         }
         
         function changeEmail() {

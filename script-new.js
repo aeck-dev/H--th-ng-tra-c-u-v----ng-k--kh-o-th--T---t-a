@@ -3,34 +3,21 @@ let firebaseService = null;
 
 // Initialize Firebase service
 async function initializeFirebase() {
-    console.log('🔍 Checking for Firebase availability...');
-    console.log('window.FirebaseService:', typeof window.FirebaseService);
-    console.log('window.firebase:', typeof window.firebase);
-    
     if (window.FirebaseService) {
         try {
             console.log('🔥 Initializing Firebase service...');
             firebaseService = new window.FirebaseService();
-            console.log('🔥 Firebase service instance created');
-            
             const success = await firebaseService.initialize();
             console.log('🔥 Firebase init result:', success);
-            console.log('🔥 Firebase isConnected:', firebaseService.isConnected);
             
             if (success && firebaseService.isConnected) {
                 console.log('✅ Firebase connected and ready');
                 window.firebaseService = firebaseService; // Global access
                 return true;
-            } else {
-                console.log('❌ Firebase init succeeded but not connected');
             }
         } catch (error) {
-            console.error('❌ Firebase initialization failed:', error);
-            console.error('Error details:', error.message, error.stack);
+            console.error('Firebase initialization failed:', error);
         }
-    } else {
-        console.log('⚠️ window.FirebaseService not available');
-        console.log('Available on window:', Object.keys(window).filter(k => k.toLowerCase().includes('firebase')));
     }
     console.log('💾 Firebase not available, using localStorage');
     return false;
@@ -39,10 +26,6 @@ async function initializeFirebase() {
 // Load exam sessions with Firebase priority
 async function loadExamSessions() {
     console.log('📋 Loading exam sessions...');
-    console.log('🔍 Firebase service status:', {
-        exists: !!firebaseService,
-        connected: firebaseService?.isConnected
-    });
     
     // Try Firebase first
     if (firebaseService && firebaseService.isConnected) {

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Test Data for Firebase Migration</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button { padding: 10px 20px; margin: 10px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Test Data Setup</h1>
+    <p>This tool creates test exam sessions and results data to verify Firebase integration.</p>
+    
+    <div id="status" class="status info">Ready to create test data...</div>
+    
+    <button onclick="createTestSessions()">1. Create Test Sessions</button>
+    <button onclick="createTestResults()">2. Create Test Results</button>
+    <button onclick="testDataFlow()">3. Test Full Data Flow</button>
+    <button onclick="clearTestData()">Clear Test Data</button>
+    
+    <div id="log"></div>
+
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="firebase-service.js"></script>
+    <script src="script.js"></script>
+
+    <script>
+        function log(message) {
+            console.log(message);
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML += '<div class="info">' + new Date().toLocaleTimeString() + ': ' + message + '</div>';
+        }
+        
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = message;
+            statusDiv.className = 'status ' + type;
+        }
+        
+        function createTestSessions() {
+            updateStatus('Creating test sessions...', 'info');
+            log('Creating sample exam sessions');
+            
+            const testSessions = [
+                {
+                    code: 'TEST001',
+                    name: 'Đợt thi thử Firebase Test 1',
+                    date: '18/11/2025',
+                    status: 'active',
+                    recordCount: 0,
+                    created: new Date().toISOString()
+                },
+                {
+                    code: 'TEST002', 
+                    name: 'Đợt thi thử Firebase Test 2',
+                    date: '18/11/2025',
+                    status: 'active',
+                    recordCount: 0,
+                    created: new Date().toISOString()
+                }
+            ];
+            
+            localStorage.setItem('aeck_exam_sessions', JSON.stringify(testSessions));
+            updateStatus('✅ Test sessions created in localStorage', 'success');
+            log('Sessions saved to localStorage');
+        }
+        
+        function createTestResults() {
+            updateStatus('Creating test results...', 'info');
+            log('Creating sample exam results');
+            
+            const testResults1 = {
+                metadata: {
+                    sessionCode: 'TEST001',
+                    sessionName: 'Đợt thi thử Firebase Test 1',
+                    totalRecords: 3,
+                    lastUpdate: new Date().toISOString()
+                },
+                data: [
+                    {
+                        rank: 1,
+                        id: 'T001',
+                        email: 'test1@aeck.edu.vn',
+                        math_correct: 25,
+                        reading_correct: 23,
+                        science_correct: 24,
+                        total_correct: 72,
+                        irt_score: 1250,
+                        percentile: 95
+                    },
+                    {
+                        rank: 2,
+                        id: 'T002',
+                        email: 'test2@aeck.edu.vn',
+                        math_correct: 22,
+                        reading_correct: 21,
+                        science_correct: 20,
+                        total_correct: 63,
+                        irt_score: 1150,
+                        percentile: 85
+                    },
+                    {
+                        rank: 3,
+                        id: 'T003',
+                        email: 'test3@aeck.edu.vn',
+                        math_correct: 20,
+                        reading_correct: 19,
+                        science_correct: 18,
+                        total_correct: 57,
+                        irt_score: 1050,
+                        percentile: 75
+                    }
+                ]
+            };
+            
+            const testResults2 = {
+                metadata: {
+                    sessionCode: 'TEST002',
+                    sessionName: 'Đợt thi thử Firebase Test 2',
+                    totalRecords: 2,
+                    lastUpdate: new Date().toISOString()
+                },
+                data: [
+                    {
+                        rank: 1,
+                        id: 'T004',
+                        email: 'test4@aeck.edu.vn',
+                        math_correct: 24,
+                        reading_correct: 22,
+                        science_correct: 23,
+                        total_correct: 69,
+                        irt_score: 1200,
+                        percentile: 90
+                    },
+                    {
+                        rank: 2,
+                        id: 'T005',
+                        email: 'test5@aeck.edu.vn',
+                        math_correct: 18,
+                        reading_correct: 17,
+                        science_correct: 16,
+                        total_correct: 51,
+                        irt_score: 950,
+                        percentile: 65
+                    }
+                ]
+            };
+            
+            localStorage.setItem('aeck_exam_results_TEST001', JSON.stringify(testResults1));
+            localStorage.setItem('aeck_exam_results_TEST002', JSON.stringify(testResults2));
+            
+            updateStatus('✅ Test results created in localStorage', 'success');
+            log('Results saved to localStorage for sessions TEST001 and TEST002');
+        }
+        
+        async function testDataFlow() {
+            updateStatus('Testing complete data flow...', 'info');
+            log('Testing user interface with test data');
+            
+            try {
+                // Reload sessions to populate dropdown
+                await loadExamSessions();
+                log('Sessions loaded into dropdown');
+                
+                // Test lookup for test user
+                const testEmail = 'test1@aeck.edu.vn';
+                log('Testing lookup for: ' + testEmail);
+                
+                const result = await lookupResult(testEmail);
+                if (result.success) {
+                    updateStatus('✅ Data flow test successful! Found result for ' + testEmail, 'success');
+                    log('Lookup successful: ' + JSON.stringify(result.data, null, 2));
+                } else {
+                    updateStatus('❌ Data flow test failed: ' + result.message, 'error');
+                    log('Lookup failed: ' + result.message);
+                }
+                
+            } catch (error) {
+                updateStatus('❌ Error during data flow test: ' + error.message, 'error');
+                log('Error: ' + error.message);
+            }
+        }
+        
+        function clearTestData() {
+            updateStatus('Clearing test data...', 'info');
+            log('Removing test data from localStorage');
+            
+            localStorage.removeItem('aeck_exam_sessions');
+            localStorage.removeItem('aeck_exam_results_TEST001');
+            localStorage.removeItem('aeck_exam_results_TEST002');
+            
+            updateStatus('✅ Test data cleared', 'success');
+            log('All test data removed');
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            log('Test data setup page loaded');
+        });
+    </script>
+</body>
+</html>

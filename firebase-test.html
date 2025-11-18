@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Test</title>
+</head>
+<body>
+    <h1>Firebase Connection Test</h1>
+    <div id="status">Testing...</div>
+    <div id="log"></div>
+
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="firebase-service.js"></script>
+
+    <script>
+        const log = document.getElementById('log');
+        const status = document.getElementById('status');
+
+        function addLog(message) {
+            console.log(message);
+            log.innerHTML += '<div>' + new Date().toLocaleTimeString() + ': ' + message + '</div>';
+        }
+
+        async function testFirebase() {
+            try {
+                addLog('🔥 Starting Firebase test...');
+                
+                // Create Firebase service
+                const firebaseService = new FirebaseService();
+                addLog('✅ Firebase service created');
+                
+                // Initialize
+                const initialized = await firebaseService.initialize();
+                addLog('Initialize result: ' + initialized);
+                addLog('Is connected: ' + firebaseService.isConnected);
+                
+                if (firebaseService.isConnected) {
+                    status.innerHTML = '<span style="color: green">✅ Firebase Connected</span>';
+                    
+                    // Test getting sessions
+                    addLog('📋 Testing getSessions...');
+                    const sessions = await firebaseService.getSessions();
+                    addLog('Sessions found: ' + JSON.stringify(sessions));
+                    
+                    // Test getting exam results for a session
+                    if (sessions && sessions.length > 0) {
+                        addLog('🔍 Testing getExamResults for first session...');
+                        const results = await firebaseService.getExamResults(sessions[0].code);
+                        addLog('Results found: ' + (results ? 'Yes' : 'No'));
+                    }
+                } else {
+                    status.innerHTML = '<span style="color: red">❌ Firebase Connection Failed</span>';
+                }
+                
+            } catch (error) {
+                addLog('❌ Error: ' + error.message);
+                status.innerHTML = '<span style="color: red">❌ Error: ' + error.message + '</span>';
+            }
+        }
+
+        // Start test when page loads
+        window.addEventListener('DOMContentLoaded', testFirebase);
+    </script>
+</body>
+</html>

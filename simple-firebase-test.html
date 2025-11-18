@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Firebase Test - AECK</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>🔥 Simple Firebase Test</h1>
+    <div id="status">Initializing...</div>
+    <div id="sessions"></div>
+    <div id="log"></div>
+
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="firebase-service.js"></script>
+
+    <script>
+        let firebaseService;
+        
+        function log(message) {
+            console.log(message);
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML += '<div class="info">' + new Date().toLocaleTimeString() + ': ' + message + '</div>';
+        }
+        
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = message;
+            statusDiv.className = 'status ' + type;
+        }
+        
+        async function testFirebase() {
+            try {
+                updateStatus('🔥 Initializing Firebase...', 'info');
+                log('Creating Firebase service instance...');
+                
+                firebaseService = new FirebaseService();
+                log('Firebase service created');
+                
+                const initialized = await firebaseService.initialize();
+                log('Firebase initialize result: ' + initialized);
+                
+                if (initialized && firebaseService.isConnected) {
+                    updateStatus('✅ Firebase Connected Successfully', 'success');
+                    log('Testing Firebase operations...');
+                    
+                    // Test getting sessions
+                    const sessions = await firebaseService.getSessions();
+                    log('Sessions retrieved: ' + sessions.length + ' found');
+                    
+                    const sessionsDiv = document.getElementById('sessions');
+                    if (sessions.length > 0) {
+                        sessionsDiv.innerHTML = '<h3>📋 Sessions Found:</h3>' + 
+                            sessions.map(s => `<div>• ${s.name} (${s.code}) - ${s.status}</div>`).join('');
+                        
+                        // Test getting exam results for first session
+                        const firstSession = sessions[0];
+                        log('Testing exam results for: ' + firstSession.code);
+                        const results = await firebaseService.getExamResults(firstSession.code);
+                        log('Exam results found: ' + (results ? 'Yes (' + (Array.isArray(results) ? results.length : 'object') + ')' : 'No'));
+                    } else {
+                        sessionsDiv.innerHTML = '<div class="info">No sessions found in Firebase</div>';
+                    }
+                } else {
+                    updateStatus('❌ Firebase Connection Failed', 'error');
+                    log('Firebase connection failed');
+                }
+                
+            } catch (error) {
+                updateStatus('❌ Error: ' + error.message, 'error');
+                log('Error: ' + error.message);
+                console.error('Full error:', error);
+            }
+        }
+        
+        // Start when DOM is ready
+        document.addEventListener('DOMContentLoaded', testFirebase);
+    </script>
+</body>
+</html>
