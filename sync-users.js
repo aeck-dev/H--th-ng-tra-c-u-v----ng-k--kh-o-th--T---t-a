@@ -56,14 +56,19 @@ async function syncUser(mongoUser) {
     } catch (error) {
       if (error.code === 'auth/user-not-found') {
         // Create new user in Firebase Auth
+        // Bcrypt hash không thể dùng trực tiếp trong Firebase
+        // Dùng identifier làm password mặc định: AECK{identifier}
+        const defaultPassword = `AECK${identifier}`;
+        
         firebaseUser = await admin.auth().createUser({
           email: email,
-          password: mongoUser.password || `temp${identifier}`, // Default password if not set
+          password: defaultPassword,
           displayName: mongoUser.fullName,
           emailVerified: false
         });
         
         console.log(`✅ Created new user in Firebase: ${email} (UID: ${firebaseUser.uid})`);
+        console.log(`   Default password: ${defaultPassword}`);
       } else {
         throw error;
       }

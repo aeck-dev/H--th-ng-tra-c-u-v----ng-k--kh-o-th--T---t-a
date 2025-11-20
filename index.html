@@ -1929,33 +1929,36 @@
             setLoading(true);
             
             try {
-                // Sử dụng Firebase Authentication
-                await ensureFirebaseClient();
+                // OPTION 1: Verify với MongoDB backend (nếu có)
+                // Nếu có backend API để verify bcrypt password
+                const mongoVerified = await verifyWithMongoDB(email, password);
                 
-                if (!firebaseClient || !firebaseClient.auth) {
-                    showError('Hệ thống đăng nhập chưa sẵn sàng. Vui lòng thử lại.');
-                    setLoading(false);
-                    return;
-                }
-                
-                // Đăng nhập bằng Firebase Auth
-                const userCredential = await firebaseClient.auth.signInWithEmailAndPassword(email, password);
-                
-                if (!userCredential || !userCredential.user) {
-                    showError('Đăng nhập thất bại');
-                    setLoading(false);
-                    return;
+                if (!mongoVerified) {
+                    // OPTION 2: Fallback - thử Firebase Auth
+                    await ensureFirebaseClient();
+                    
+                    if (!firebaseClient || !firebaseClient.auth) {
+                        showError('Hệ thống đăng nhập chưa sẵn sàng. Vui lòng thử lại.');
+                        setLoading(false);
+                        return;
+                    }
+                    
+                    // Đăng nhập bằng Firebase Auth
+                    const userCredential = await firebaseClient.auth.signInWithEmailAndPassword(email, password);
+                    
+                    if (!userCredential || !userCredential.user) {
+                        showError('Đăng nhập thất bại');
+                        setLoading(false);
+                        return;
+                    }
                 }
                 
                 // Login successful
-                console.log('✅ Login successful:', userCredential.user.email);
+                console.log('✅ Login successful:', email);
                 
                 // Store user info
                 currentUserEmail = email;
-                currentUserInfo = {
-                    uid: userCredential.user.uid,
-                    email: userCredential.user.email
-                };
+                currentUserInfo = { email: email };
                 document.getElementById('displayEmail').textContent = email;
                 
                 // Load exam results
@@ -1964,11 +1967,12 @@
                 // Success - show dashboard
                 setLoading(false);
                 showResultsDashboard();
+                
             } catch (error) {
                 console.error('Không thể đăng nhập:', error);
                 
-                // Firebase error messages
-                let errorMessage = 'Có lỗi xảy ra khi đăng nhập.';
+                // Error messages
+                let errorMessage = 'Email hoặc mật khẩu không đúng.';
                 
                 if (error.code === 'auth/user-not-found') {
                     errorMessage = 'Email chưa được đăng ký trong hệ thống.';
@@ -1986,6 +1990,45 @@
                 
                 showError(errorMessage);
                 setLoading(false);
+            }
+        }
+        
+        // Verify password với MongoDB backend API
+        async function verifyWithMongoDB(email, password) {
+            const BACKEND_API = 'https://your-backend-api.herokuapp.com'; // ⚠️ THAY ĐỔI SAU KHI DEPLOY
+            
+            try {
+                console.log('🔐 Verifying with MongoDB backend...');
+                
+                const response = await fetch(`${BACKEND_API}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    console.log('✅ MongoDB authentication successful');
+                    
+                    // Lưu JWT token
+                    localStorage.setItem('authToken', data.token);
+                    
+                    // Lưu user info
+                    if (data.user) {
+                        currentUserInfo = data.user;
+                    }
+                    
+                    return true;
+                }
+                
+                console.log('❌ MongoDB authentication failed:', data.message);
+                return false;
+                
+            } catch (error) {
+                console.error('❌ MongoDB verify error:', error);
+                // Fallback to Firebase if backend is down
+                return false;
             }
         }
         

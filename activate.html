@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kích hoạt tài khoản - AECK</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="email-input">
+            <div class="form-container">
+                <h2 class="section-title">Kích hoạt tài khoản lần đầu</h2>
+                <p class="section-subtitle">Nhập email và tạo mật khẩu mới cho tài khoản của bạn</p>
+                
+                <div class="form-group">
+                    <label for="email">Email đã đăng ký *</label>
+                    <input type="email" id="email" placeholder="example@email.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="newPassword">Mật khẩu mới *</label>
+                    <input type="password" id="newPassword" placeholder="Tối thiểu 6 ký tự" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirmPassword">Xác nhận mật khẩu *</label>
+                    <input type="password" id="confirmPassword" placeholder="Nhập lại mật khẩu" required>
+                </div>
+                
+                <div class="error-message" id="errorMessage" style="display: none;"></div>
+                <div class="success-message" id="successMessage" style="display: none;"></div>
+                
+                <button type="button" class="submit-btn" onclick="activateAccount()">Kích hoạt tài khoản</button>
+                
+                <p style="text-align: center; margin-top: 20px;">
+                    <a href="index.html">← Quay lại đăng nhập</a>
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="firebase-service.js"></script>
+    
+    <script>
+        async function activateAccount() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            hideMessages();
+            
+            if (!email || !password || !confirmPassword) {
+                showError('Vui lòng điền đầy đủ thông tin');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showError('Mật khẩu xác nhận không khớp');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showError('Mật khẩu phải có ít nhất 6 ký tự');
+                return;
+            }
+            
+            try {
+                // Tạo tài khoản Firebase
+                const firebase = await window.FirebaseService ? new window.FirebaseService() : null;
+                if (!firebase) throw new Error('Firebase chưa sẵn sàng');
+                
+                await firebase.initialize();
+                const userCredential = await firebase.auth.createUserWithEmailAndPassword(email, password);
+                
+                showSuccess('✅ Kích hoạt tài khoản thành công! Đang chuyển đến trang đăng nhập...');
+                
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 2000);
+                
+            } catch (error) {
+                if (error.code === 'auth/email-already-in-use') {
+                    showError('Email này đã được kích hoạt. Vui lòng đăng nhập.');
+                } else if (error.code === 'auth/invalid-email') {
+                    showError('Email không hợp lệ');
+                } else if (error.code === 'auth/weak-password') {
+                    showError('Mật khẩu quá yếu. Vui lòng dùng mật khẩu mạnh hơn.');
+                } else {
+                    showError('Lỗi: ' + error.message);
+                }
+            }
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+        
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+        }
+        
+        function hideMessages() {
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+    </script>
+    
+    <style>
+        .error-message {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+    </style>
+</body>
+</html>
