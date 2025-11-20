@@ -51,6 +51,11 @@ class AECKAdmin {
     }
 
     async initializeFirebase() {
+        if (!window.firebaseService && window.FirebaseService) {
+            // Admin panel needs its own FirebaseService instance because the public site initializes in script.js
+            window.firebaseService = new window.FirebaseService();
+        }
+
         if (window.firebaseService) {
             console.log('🔥 Initializing Firebase...');
             const connected = await window.firebaseService.initialize();

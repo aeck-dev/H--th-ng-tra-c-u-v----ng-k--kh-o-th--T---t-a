@@ -446,15 +446,82 @@
             box-shadow: 0 4px 15px rgba(192, 0, 0, 0.3);
             letter-spacing: 0.5px;
             text-transform: uppercase;
+            position: relative;
         }
 
-        .submit-btn:hover {
+        .submit-btn:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(192, 0, 0, 0.4);
         }
 
-        .submit-btn:active {
+        .submit-btn:active:not(:disabled) {
             transform: translateY(0);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .submit-btn .btn-text {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .submit-btn .btn-spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .submit-btn.loading .btn-text {
+            display: none;
+        }
+
+        .submit-btn.loading .btn-spinner {
+            display: inline-block;
+        }
+
+        .error-message {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+            font-size: 14px;
+            text-align: left;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .error-message i {
+            margin-right: 8px;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         /* User Info Bar */
@@ -791,8 +858,8 @@
         <!-- Email Input Form -->
         <div class="email-input" id="emailInput">
             <div class="form-container">
-                <h2 class="section-title">Tra cứu kết quả thi</h2>
-                <p class="section-subtitle">Vui lòng nhập địa chỉ email đã đăng ký để xem kết quả</p>
+                <h2 class="section-title">Đăng nhập hệ thống</h2>
+                <p class="section-subtitle">Vui lòng đăng nhập để xem kết quả thi của bạn</p>
                 <div class="form-group">
                     <label for="userEmail">Địa chỉ Email *</label>
                     <div class="input-wrapper">
@@ -800,8 +867,22 @@
                         <input type="email" id="userEmail" name="userEmail" placeholder="example@email.com" required autocomplete="email">
                     </div>
                 </div>
-                <button type="button" class="submit-btn" onclick="submitEmail()">
-                    <i class="fas fa-search" style="margin-right: 8px;"></i>Tra cứu ngay
+                <div class="form-group">
+                    <label for="userPassword">Mật khẩu *</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="userPassword" name="userPassword" placeholder="Nhập mật khẩu" required autocomplete="current-password">
+                    </div>
+                </div>
+                <div class="error-message" id="errorMessage">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span id="errorText"></span>
+                </div>
+                <button type="button" class="submit-btn" id="submitBtn" onclick="submitLogin()">
+                    <span class="btn-text">
+                        <i class="fas fa-sign-in-alt" style="margin-right: 8px;"></i>Đăng nhập
+                    </span>
+                    <span class="btn-spinner"></span>
                 </button>
             </div>
         </div>
@@ -1817,8 +1898,100 @@
             alert('Chức năng xem chứng chỉ sẽ được cập nhật sau!');
         }
 
+        async function submitLogin() {
+            const emailInput = document.getElementById('userEmail');
+            const passwordInput = document.getElementById('userPassword');
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+            
+            console.log('🔐 Submit login:', email);
+            
+            // Ẩn error message cũ
+            hideError();
+            
+            // Validation
+            if (!email) {
+                showError('Vui lòng nhập email');
+                return;
+            }
+            
+            if (!password) {
+                showError('Vui lòng nhập mật khẩu');
+                return;
+            }
+            
+            if (!isValidEmail(email)) {
+                showError('Email không hợp lệ');
+                return;
+            }
+            
+            // Bắt đầu loading
+            setLoading(true);
+            
+            try {
+                // Sử dụng Firebase Authentication
+                await ensureFirebaseClient();
+                
+                if (!firebaseClient || !firebaseClient.auth) {
+                    showError('Hệ thống đăng nhập chưa sẵn sàng. Vui lòng thử lại.');
+                    setLoading(false);
+                    return;
+                }
+                
+                // Đăng nhập bằng Firebase Auth
+                const userCredential = await firebaseClient.auth.signInWithEmailAndPassword(email, password);
+                
+                if (!userCredential || !userCredential.user) {
+                    showError('Đăng nhập thất bại');
+                    setLoading(false);
+                    return;
+                }
+                
+                // Login successful
+                console.log('✅ Login successful:', userCredential.user.email);
+                
+                // Store user info
+                currentUserEmail = email;
+                currentUserInfo = {
+                    uid: userCredential.user.uid,
+                    email: userCredential.user.email
+                };
+                document.getElementById('displayEmail').textContent = email;
+                
+                // Load exam results
+                const results = await loadExamResults(email);
+                
+                // Success - show dashboard
+                setLoading(false);
+                showResultsDashboard();
+            } catch (error) {
+                console.error('Không thể đăng nhập:', error);
+                
+                // Firebase error messages
+                let errorMessage = 'Có lỗi xảy ra khi đăng nhập.';
+                
+                if (error.code === 'auth/user-not-found') {
+                    errorMessage = 'Email chưa được đăng ký trong hệ thống.';
+                } else if (error.code === 'auth/wrong-password') {
+                    errorMessage = 'Mật khẩu không đúng.';
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage = 'Email không hợp lệ.';
+                } else if (error.code === 'auth/user-disabled') {
+                    errorMessage = 'Tài khoản đã bị vô hiệu hóa.';
+                } else if (error.code === 'auth/too-many-requests') {
+                    errorMessage = 'Quá nhiều lần thử. Vui lòng thử lại sau.';
+                } else if (error.code === 'auth/network-request-failed') {
+                    errorMessage = 'Lỗi kết nối mạng. Vui lòng kiểm tra internet.';
+                }
+                
+                showError(errorMessage);
+                setLoading(false);
+            }
+        }
+        
         // Email and Navigation Functions
         let currentUserEmail = '';
+        let currentUserInfo = null;
 
         function showEmailInput() {
             document.getElementById('emailInput').style.display = 'block';
@@ -1834,43 +2007,81 @@
             document.getElementById('lookupResults').style.display = 'none';
         }
 
-        async function submitEmail() {
-            const emailInput = document.getElementById('userEmail');
-            const email = emailInput.value.trim();
-            
-            console.log('🔍 Submit email:', email);
-            
-            if (!email) {
-                alert('Vui lòng nhập email');
-                return;
-            }
-            
-            if (!isValidEmail(email)) {
-                alert('Email không hợp lệ');
-                return;
-            }
-            
-            currentUserEmail = email;
-            document.getElementById('displayEmail').textContent = email;
-            
-            try {
-                await loadExamResults(email);
-                showResultsDashboard();
-            } catch (error) {
-                console.error('Không thể tải dữ liệu kết quả:', error);
-                alert('Có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại sau.');
+        function showError(message) {
+            const errorMessage = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            errorText.textContent = message;
+            errorMessage.classList.add('show');
+        }
+        
+        function hideError() {
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.classList.remove('show');
+        }
+        
+        function setLoading(loading) {
+            const submitBtn = document.getElementById('submitBtn');
+            if (loading) {
+                submitBtn.classList.add('loading');
+                submitBtn.disabled = true;
+            } else {
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
             }
         }
         
         function changeEmail() {
             document.getElementById('userEmail').value = '';
+            document.getElementById('userPassword').value = '';
             currentUserEmail = '';
+            currentUserInfo = null;
+            hideError();
             showEmailInput();
         }
         
         function isValidEmail(email) {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             return emailRegex.test(email);
+        }
+        
+        // Chuẩn hóa userId - loại bỏ tiền tố AECK nếu có và chỉ lấy phần số
+        function normalizeUserId(userId) {
+            // Loại bỏ khoảng trắng
+            let normalized = userId.trim().toUpperCase();
+            
+            // Nếu có tiền tố AECK, loại bỏ nó
+            if (normalized.startsWith('AECK')) {
+                normalized = normalized.substring(4);
+            }
+            
+            // Loại bỏ các ký tự không phải số
+            normalized = normalized.replace(/[^0-9]/g, '');
+            
+            return normalized;
+        }
+        
+        // Kiểm tra khớp giữa email và userId
+        async function verifyUserIdMatch(email, normalizedUserId, examResults) {
+            // Nếu không có kết quả nào, không thể verify
+            if (!examResults || examResults.length === 0) {
+                return false;
+            }
+            
+            // Kiểm tra trong tất cả các kết quả đã load
+            for (const examResult of examResults) {
+                if (examResult.result && examResult.result.id) {
+                    const resultId = normalizeUserId(examResult.result.id);
+                    
+                    // So sánh userId đã chuẩn hóa
+                    if (resultId === normalizedUserId) {
+                        console.log('✅ ID match found:', examResult.result.id, 'matches', normalizedUserId);
+                        return true;
+                    }
+                }
+            }
+            
+            console.warn('❌ No ID match found for:', normalizedUserId);
+            return false;
         }
 
         // Init
