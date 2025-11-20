@@ -2,10 +2,10 @@
   "name": "ttkt-aeck-backend",
   "version": "1.0.0",
   "description": "Backend server for AECK exam system with MongoDB authentication",
-  "main": "backend-server.js",
+  "main": "backend-auth-server.js",
   "scripts": {
-    "start": "node backend-server.js",
-    "dev": "nodemon backend-server.js",
+    "start": "node backend-auth-server.js",
+    "dev": "nodemon backend-auth-server.js",
     "sync:all": "node sync-users.js all",
     "sync:new": "node sync-users.js new",
     "sync:watch": "node sync-users.js watch",
