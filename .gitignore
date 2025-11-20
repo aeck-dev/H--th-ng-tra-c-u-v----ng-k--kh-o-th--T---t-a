@@ -2,6 +2,9 @@
 
 # Firebase Admin SDK Private Key
 firebase-admin-key.json
+serviceAccountKey.json
+users-export.json
+users-backup.json
 
 # Environment Variables
 .env
